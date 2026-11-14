@@ -1,39 +1,64 @@
 # ASTRANOVUS — NASA Space Apps 2026 (Team Astravant)
 
-Challenge: **Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars**
+**Challenge:** *Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars.*
 
-ASTRANOVUS scores every 0.25° Earth land cell (0-100) for how closely it resembles a chosen
-Moon/Mars target, explains *why* (per-dimension breakdown) and lets users change the weights.
+ASTRANOVUS is an independent research prototype (not an official NASA tool, rating or landing-site certification).
+You choose **Moon or Mars → an experiment you want to test → a compatible planetary reference site**, and an explainable
+Python engine ranks the Earth regions that best fit that purpose, showing the NASA data behind every number, what is
+missing, and what Earth cannot reproduce.
 
-## Repo layout
+## Architecture
 ```
-data/dimensions.json     8 comparison dimensions (the shared vocabulary)
-data/targets.json        Moon/Mars target profiles (rules + weights)   <- Boy 2 owns
-data/sample/             tiny synthetic Earth grid so everyone can start now
-data/processed/          real earth_grid.csv goes here                 <- Boy 1 owns
-model/scoring_core.py    the scoring function (the heart of the project)
-backend/main.py          FastAPI: /targets /score /site /compare
-frontend/                React + Vite + Leaflet map UI
-scripts/                 make_sample_grid.py, validate_data.py
-docs/DATA_CONTRACT.md    READ THIS FIRST - exact file formats
-docs/DATA_SOURCES.md     the NASA challenge datasets + how to get them (Boy 1 starts here)
+NASA POWER + MODIS (MOD11C3, MOD13C2, MOD10CM) + GPM IMERG  --scripts/build_earth_grid.py-->  data/processed/earth_grid.csv (+ features, metadata)
+data/targets.json (reference sites) + data/purposes.json (mission profiles) + data/experiments.json (12 scenarios)
+                         |
+        model/scoring_core.py + model/recommend.py   (explainable weighted similarity, gates, regions)
+                         |
+        backend/main.py (+ backend/mission_api.py)   FastAPI
+                         |
+        frontend/ (React + Vite + TypeScript + Tailwind + Leaflet + globe)
 ```
+No scoring happens in the browser.
 
-## Run it (5 minutes)
+## Run locally
 ```bash
-# 1. data + backend
-pip install -r backend/requirements.txt
-python scripts/make_sample_grid.py        # makes data/sample/earth_grid_sample.csv
-python scripts/validate_data.py           # must print OK
-uvicorn backend.main:app --reload --port 8000
+# one-time: isolated data/backend environment (Python 3.12)
+py -3.12 -m venv .venv-data
+.venv-data/Scripts/pip install -r requirements-data.txt -r backend/requirements.txt
 
-# 2. frontend (new terminal)
-cd frontend && npm install && npm run dev
+# backend (terminal 1)
+.venv-data/Scripts/python -m uvicorn backend.main:app --port 8000
+
+# frontend (terminal 2)
+cd frontend && npm install && npm run dev        # http://localhost:5173
 ```
-Open http://localhost:5173 — pick a target, see the score map.
+The API refuses to start without `data/processed/earth_grid.csv` (no silent synthetic fallback). For UI-only work with the
+synthetic sample set `ASTRANOVUS_ALLOW_SAMPLE=1`; the UI then shows a red warning banner.
+
+## Rebuild the Earth grid from the downloaded NASA files
+```bash
+.venv-data/Scripts/python scripts/build_earth_grid.py        # reads data/raw/*, never modifies it; backs up the old grid
+python scripts/validate_data.py
+python scripts/build_target_evidence.py
+python scripts/validate_known_analogs.py                     # writes docs/VALIDATION.md
+```
+
+## Tests
+```bash
+.venv-data/Scripts/python -m pytest -q tests    # engine + API (real grid)
+cd frontend && npm run lint && npm test && npm run build
+```
+
+## Honest status
+* Real NASA-derived dimensions: D1 cold, D2 aridity, D7 light (POWER, annual); D3 barren (MODIS NDVI), D6 ice **proxy** (MODIS snow), D8 thermal swing (MODIS LST) — **calendar year 2024 (12 monthly granules; one year, not a multi-year climatology)**.
+* **Missing:** D4 terrain, D5 rock. They stay empty and are shown as "no data yet", never zero.
+* Moon/Mars reference-site rules are team drafts; see `docs/TARGET_EVIDENCE.md` for which rules have a retrieved source.
+* Grid is 5° (coarse). Regions are candidate areas, not verified ground-test sites.
+
+## Docs
+`docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` ·
+`docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
 
 ## Rules
-- Never change a column/field name without telling everyone (see DATA_CONTRACT.md).
-- `python scripts/validate_data.py` must pass before every push.
-- Small commits, push often, one branch per person: `git checkout -b yourname/feature`.
-- **All data here is PLACEHOLDER until Boy 1 / Boy 2 replace it with real NASA-derived data.**
+Never change a column/field name without telling everyone. `scripts/validate_data.py` must pass before every push.
+All data are attributed to NASA/NSIDC/LP DAAC/GES DISC products listed in `docs/METHODOLOGY.md`.

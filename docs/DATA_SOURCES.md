@@ -24,3 +24,9 @@ as the supporting NASA source. In the app/video say clearly: "primary = challeng
 ## Safety net
 If a download fails or is too slow: keep the sample grid (data/sample), say so honestly, and ship. A working
 app with 4 real dimensions beats a broken one with 8.
+
+## Status update (2026-11-15)
+* MOD11C3, MOD13C2, MOD10CM (collection 061) and GPM IMERG V07B: downloaded for **all 12 months of 2024**; parsed by `scripts/build_earth_grid.py` (see docs/METHODOLOGY.md).
+* SRTMGL1 v003: 10 tiles downloaded for the top candidate regions (`data/raw/srtm/`); `scripts/stage2_srtm.py` writes `data/processed/stage2.json`.
+* EMIT: not used (coverage is partial and mineral classes are categorical).
+* The official challenge page could not be re-checked from this environment; re-verify the dataset list there.

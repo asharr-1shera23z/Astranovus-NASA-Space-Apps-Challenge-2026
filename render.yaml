@@ -1,0 +1,10 @@
+# Render blueprint (not applied until you connect a Render account yourself).
+services:
+  - type: web
+    name: astranovus-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ASTRANOVUS_CORS_ORIGINS
+        value: https://YOUR-FRONTEND-DOMAIN   # set to the deployed frontend origin

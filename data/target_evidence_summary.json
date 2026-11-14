@@ -1,0 +1,52 @@
+{
+  "rows": 49,
+  "supported_rows": 9,
+  "targets": {
+    "MOON_SP_RIDGE": {
+      "grounded": 1,
+      "total": 7,
+      "status": "core"
+    },
+    "MOON_PSR": {
+      "grounded": 2,
+      "total": 6,
+      "status": "core"
+    },
+    "MOON_LAVATUBE": {
+      "grounded": 1,
+      "total": 5,
+      "status": "core"
+    },
+    "MARS_ICE": {
+      "grounded": 2,
+      "total": 6,
+      "status": "core"
+    },
+    "MARS_JEZERO": {
+      "grounded": 3,
+      "total": 6,
+      "status": "core"
+    },
+    "MARS_MUDVOLC": {
+      "grounded": 0,
+      "total": 5,
+      "status": "core"
+    },
+    "MARS_CHLORIDE": {
+      "grounded": 0,
+      "total": 4,
+      "status": "optional"
+    },
+    "MARS_AEOLIAN": {
+      "grounded": 0,
+      "total": 5,
+      "status": "optional"
+    },
+    "MOON_MARE": {
+      "grounded": 0,
+      "total": 5,
+      "status": "optional"
+    }
+  },
+  "note": "'supported' = a retrieved source states something consistent with the rule direction (qualitative). No weights were changed."
+}

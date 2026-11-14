@@ -48,3 +48,30 @@ Weight: 0 (ignore) to 3 (critical). Dimensions not listed are ignored.
 | GET /site?lat=..&lon=..&target=ID | per-dimension breakdown for the nearest cell |
 | GET /compare?lat=..&lon=..  | that cell's score against every target |
 | POST /score_custom | body: `{"target": {...rules...}}` score with user-edited weights |
+
+## 6. Purposes  (`data/purposes.json`) — added in v1
+Flow: **body (moon|mars) -> purpose -> best Earth regions.**
+```json
+{"id":"ISRU_WATER","name":"...","question":"We want to test ...","bodies":["moon","mars"],
+ "targets":["MOON_PSR","MARS_ICE"], "nasa_basis":"...",
+ "multipliers":{"D6_ice":2.0}, "gates":[{"dim":"D6_ice","op":">=","value":0.5,"why":"..."}]}
+```
+- `multipliers`: purpose changes how much each dimension matters (effective weight = target weight x multiplier).
+- `gates`: hard must-haves. A cell failing a gate is dropped. **Missing data never passes silently: it is flagged "unverified".**
+- Results are grouped into **regions** (neighbouring top cells merged), each with why-match, weak points, missing data, confidence.
+
+New endpoints: `GET /purposes?body=moon`, `GET /recommend?body=&purpose=&target=&min_coverage=0.4&top=10`.
+D6_ice is currently a PROXY (share of months below 0 C from NASA POWER). Replace with MODIS snow/ice when available.
+
+## 7. Grid build outputs (v2, real NASA data) — added
+`scripts/build_earth_grid.py` writes, next to `earth_grid.csv`:
+* `earth_grid_features.csv`: raw physical per-cell features (LST K, NDVI, snow %, precipitation mm/day per month; derived means/peaks) for traceability.
+* `earth_grid_metadata.json`: product versions/DOIs, granule file names, months covered, quality rules, per-dimension status (`derived` / `proxy` / `missing`) and temporal span, cell coverage, cross-checks.
+The previous POWER-only grid is preserved in `data/processed/archive/earth_grid_power_only_v1.csv`.
+MODIS/GPM-derived dimensions cover only the months listed in the metadata (currently all 12 months of 2024: a single year). With fewer months the build labels them PARTIAL SEASONAL.
+
+## 8. Mission layer (v2) — added
+`data/experiments.json` (12 scenarios → existing purposes, NASA sources, limits), `data/target_evidence.csv` / `target_evidence_summary.json`, `data/known_analogs.json`, `data/validation_summary.json`.
+New endpoints: `GET /experiments`, `GET /data_status`, `GET /mission/recommend?experiment=&target=&allow_unverified=`, `GET /validation`.
+`/health` additionally returns `data_source` and `is_synthetic_sample`. The API refuses to start without `earth_grid.csv` unless `ASTRANOVUS_ALLOW_SAMPLE=1`.
+Data state (UI layer): `unavailable` if a gate dimension has no data or under 50% of weighted criteria have data; `partial` if any dimension is missing or a proxy; else `ready`.

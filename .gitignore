@@ -9,3 +9,15 @@ data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+
+.venv-data/
+frontend/dist/
+
+# Deployable, small, versioned Earth-grid outputs (the API needs these at runtime)
+!data/processed/earth_grid.csv
+!data/processed/earth_grid_features.csv
+!data/processed/earth_grid_metadata.json
+!data/processed/archive/
+!data/processed/archive/*.csv
+
+!data/processed/stage2.json
