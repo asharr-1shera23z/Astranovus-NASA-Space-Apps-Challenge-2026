@@ -11,6 +11,7 @@ interface Measurement {
   evidence_class: string;
   scope: string;
   retrieval: string;
+  evidence_quality?: string;
   instrument_or_method: string;
   spatial_resolution: string;
   source_url: string;
@@ -76,7 +77,8 @@ export function ReferenceEvidence({ targetId, targetName }: { targetId: string; 
                 <span className="flex gap-1.5 text-[10px] font-semibold">
                   <span className={`px-2 py-0.5 rounded-full ${CLASS_STYLE[m.evidence_class] ?? 'bg-[#EDF3FA]'}`}>{m.evidence_class}</span>
                   <span className="px-2 py-0.5 rounded-full bg-[#EDF3FA] text-[#142B50]">{m.scope === 'body' ? 'generic body property' : m.scope === 'region' ? 'regional' : 'site'}</span>
-                  {m.retrieval === 'search_summary' && <span className="px-2 py-0.5 rounded-full bg-[#FDECEC] text-[#B42318]">re-verify</span>}
+                  {m.evidence_quality && m.evidence_quality !== 'unverified' && <span className="px-2 py-0.5 rounded-full bg-[#F4F8FF] text-[#142B50]">{m.evidence_quality.replace(/_/g, ' ')}</span>}
+                  {m.retrieval === 'search_summary' && <span className="px-2 py-0.5 rounded-full bg-[#FDECEC] text-[#B42318]">unverified: re-verify</span>}
                 </span>
               </div>
               <div className="text-[#68788F]">

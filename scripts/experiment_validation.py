@@ -20,6 +20,38 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+def finish(rec, e, t, r, regs, app):
+    """Machine-readable matrix fields (deterministic checks only; literature review is documented separately)."""
+    warns = []
+    suit = [g.get("suitability", {}).get("status") for g in regs]
+    scope = (t.get("screening") or {}).get("screening_scope")
+    if scope == "climate_terrain_similarity_only":
+        warns.append("climate/terrain similarity only: the geology that defines this target is not measured")
+    if any(st == "Geological suitability unverified" for st in suit):
+        warns.append("every recommended region is labelled 'Geological suitability unverified'")
+    if r.get("data_state") != "ready":
+        warns.append(f"data state is '{r.get('data_state')}': {', '.join(r.get('assessment', {}).get('missing_dimensions', []) + r.get('assessment', {}).get('proxy_dimensions', []) + r.get('assessment', {}).get('sparse_dimensions', [])) or 'see assessment'}")
+    st = r.get("ranking_stability")
+    if st and st["weights_top1_within_5deg"] < 0.5:
+        warns.append(f"#1 region unstable under weight noise ({st['weights_top1_within_5deg']:.0%} within 5 degrees)")
+    if st and st["missing_20pct_top1_within_5deg"] < 0.5:
+        warns.append(f"#1 region unstable when data are missing ({st['missing_20pct_top1_within_5deg']:.0%})")
+    if any(g["coverage"] < 0.9 for g in regs):
+        warns.append("at least one recommended region has coverage < 90%")
+    lat_polar = [g["location_label"] for g in regs if abs(g["lat"]) >= 66]
+    dry = any(gt["dim"] == "D2_aridity" for gt in (e["purpose"].get("gates") or []))
+    if lat_polar and e["body"] == "mars" and "ICE" not in t["id"]:
+        warns.append(f"polar regions in the top five for a non-ice Mars target: {', '.join(lat_polar)}")
+    desc_ok = bool(e.get("what_is_tested")) and bool(e.get("why")) and bool(e.get("environment_requirements"))
+    compat_ok = t["body"] == e["body"] and t["id"] in e["purpose"].get("targets", []) if "targets" in e["purpose"] else t["body"] == e["body"]
+    rec.update(experiment_description_present=desc_ok, target_body_matches_experiment=compat_ok,
+               n_candidate_regions=len(regs), data_sufficiency=r.get("data_state"), gate_status={"gates": rec["gates"], "cells_excluded_unverified": r.get("n_cells_excluded_unverified"), "regions_pass_gates": True},
+               mean_region_coverage=round(float(np.mean([g["coverage"] for g in regs])), 3), suitability_statuses=sorted(set(suit)),
+               screening_scope=scope, ranking_stability=st, scientific_warnings=warns)
+    rec["validation_result"] = "fail" if not (desc_ok and compat_ok) else ("pass_with_warnings" if warns else "pass")
+    return rec
+
+
 def main():
     from backend import mission_api, main as app
     from model.recommend import recommend
@@ -75,6 +107,7 @@ def main():
             b = {(g["best_cell"]["lat"], g["best_cell"]["lon"]) for g in nb.get("regions", [])}
             rec["jaccard_vs_neutral"] = round(len(a & b) / len(a | b), 2) if a | b else None
             rec["limits"] = e["cannot_reproduce"]
+            rec = finish(rec, e, t, r, regs, app)
             rows.append(rec)
 
     json.dump({"rows": rows, "problems": problems}, open(ROOT / "data/experiment_validation.json", "w", encoding="utf-8"), indent=1)
@@ -93,6 +126,10 @@ def main():
         top = r.get("top", [{}])[0]
         t1 = f"{top.get('label', '-')} ({top.get('adjusted', '-')} / {top.get('raw', '-')} / {top.get('coverage', '-')})" if top else "-"
         L.append(f"| {r['experiment']} | {r['target']} | {r['grounding']} | {r.get('status')} | {t1 if r.get('top') else r.get('note', '-')} | {r.get('jaccard_vs_neutral', '-')} |")
+    L += ["", "## Matrix summary", "",
+          f"- Deterministic result per pair: {', '.join(f'{k} {v}' for k, v in sorted({x: sum(1 for r in rows if r.get('validation_result') == x) for x in set(r.get('validation_result') for r in rows)}.items()))}.",
+          "- `pass` only means code-level invariants held. It is NOT scientific validation: most pairs carry warnings that say what the model cannot establish (see `scientific_warnings` in `data/experiment_validation.json`).",
+          "- Literature review of the scientific claims: see `docs/SCIENTIFIC_VALIDATION_REPORT_V3.md`.", ""]
     L += ["", "## Reading", "",
           "- Jaccard near 1.0 means the experiment profile barely changes the neutral answer; low values mean the mission gates and multipliers matter.",
           "- Every experiment is an *analogue exercise on Earth*; each carries its own `cannot_reproduce` list in the API and UI (vacuum, gravity, radiation, regolith chemistry, extreme cold of lunar PSRs, etc.).",

@@ -4,6 +4,7 @@ import { BODY_ACCENT, bodyLabel, pct, rankScore, suitabilitySummary } from '../u
 import { DimensionTable } from './DimensionTable';
 import { EarthLimitsNote } from './DataBanners';
 import { ScoreDonut } from './ScoreDonut';
+import { SuitabilityPanel } from './SuitabilityPanel';
 import { InfoNote } from './StatusViews';
 
 interface Props {
@@ -79,6 +80,11 @@ export function RegionDetail({ region: r, result, inCompare, onToggleCompare, on
             ))}
           </InfoNote>
         )}
+
+        <div className="space-y-2">
+          <h3 className="font-display font-bold text-sm text-[#142B50]">How far the evidence supports this match</h3>
+          <SuitabilityPanel region={r} target={result.target_info} stability={result.ranking_stability} />
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-2">

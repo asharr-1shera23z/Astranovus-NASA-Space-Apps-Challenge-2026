@@ -44,6 +44,9 @@ python scripts/validate_known_analogs.py                     # writes docs/VALID
 python scripts/sensitivity_analysis.py                        # writes data/sensitivity_summary.json
 python scripts/experiment_validation.py                       # writes docs/EXPERIMENT_VALIDATION.md
 python scripts/build_planetary_measurements.py                # writes data/planetary_measurements.csv/.json
+python scripts/build_analog_dataset_v3.py                     # writes data/analog_dataset_v3.json and the frozen cohort file
+python scripts/validate_v3.py                                 # development stage; add --final to score the frozen cohort once
+python scripts/diagnose_targets.py; python scripts/d4_analysis.py; python scripts/ranking_stability.py
 ```
 
 ## Environment variables
@@ -67,7 +70,7 @@ cd frontend && npm run lint && npm test && npm run build
 * Results are candidate **areas** (2.5 degree cells), not verified ground-test sites. See `docs/PROJECT_STATUS.md` for everything blocked or pending.
 
 ## Docs
-`docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` · `docs/SCIENTIFIC_VALIDATION_REPORT.md` · `docs/PLANETARY_EVIDENCE_REPORT.md` · `docs/EXPERIMENT_VALIDATION.md` ·
+`docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` · `docs/SCIENTIFIC_VALIDATION_REPORT.md` · `docs/PLANETARY_EVIDENCE_REPORT.md` · `docs/EXPERIMENT_VALIDATION.md` · `docs/SCIENTIFIC_VALIDATION_REPORT_V3.md` · `docs/ANALOG_DATASET_V3.md` ·
 `docs/PROJECT_STATUS.md` · `docs/SOLUTION.md` · `docs/MANUAL_EVIDENCE_NEEDED.md` · `docs/PRE_DEPLOYMENT_CHECKLIST.md` · `docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
 
 ## Rules

@@ -114,6 +114,12 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
     dim_meta = {d["id"]: d for d in dimensions}
     ev_path = root / "data/target_evidence_summary.json"
     evidence = json.load(open(ev_path, encoding="utf-8")) if ev_path.exists() else {"targets": {}}
+    rd_path = root / "data/target_readiness.json"
+    rd_all = json.load(open(rd_path, encoding="utf-8")) if rd_path.exists() else {"targets": {}, "_dimension_categories": {}}
+    readiness = rd_all.get("targets", {})
+    dim_cats = rd_all.get("_dimension_categories", {})
+    st_path = root / "data/ranking_stability.json"
+    stability = json.load(open(st_path, encoding="utf-8"))["pairs"] if st_path.exists() else {}
     feat_path = root / "data/processed/earth_grid_features.csv"
     feats = {}
     if feat_path.exists() and not grid_is_sample:
@@ -242,12 +248,60 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
                 "missing_dimensions": missing, "proxy_dimensions": proxies, "sparse_dimensions": sparse,
                 "gate_dimensions_missing": [g["dim"] for g in gate_missing], "notes": notes}
 
+    def suitability(tid: str, dims: list[dict], coverage: float) -> dict:
+        """Scientific suitability labels reusing the dimension-level explanations. No independent score is invented:
+        category similarity is the weighted mean of the existing dimension similarities that belong to it."""
+        rd = readiness.get(tid, {})
+        cats = {}
+        for cat, members in dim_cats.items():
+            rows = [d for d in dims if d["dimension"] in members]
+            if not rows:
+                continue
+            have = [d for d in rows if d["similarity"] is not None]
+            wsum = sum(float(d["weight"]) for d in have)
+            cats[cat] = {"similarity": round(sum(float(d["weight"]) * float(d["similarity"]) for d in have) / wsum, 3) if wsum else None,
+                         "dimensions": [d["dimension"] for d in rows], "data_available": f"{len(have)}/{len(rows)}",
+                         "basis": "proxy" if any(d["data_status"] == "proxy" for d in have) else ("measured_or_derived" if have else "missing")}
+        supported, partial = [], []
+        for d in dims:
+            if d["similarity"] is None:
+                partial.append(f"{d['name']}: no data for this cell ({d.get('missing_reason') or 'missing'}).")
+            elif d["data_status"] == "proxy":
+                partial.append(f"{d['name']}: similarity {d['similarity']:.2f}, but this dimension is a proxy ({d['source'][:90]}).")
+            elif d["similarity"] >= 0.7:
+                supported.append(f"{d['name']}: similarity {d['similarity']:.2f} ({d['data_status']}, {d['source'][:80]}).")
+            else:
+                partial.append(f"{d['name']}: similarity only {d['similarity']:.2f}.")
+        unsupported = [f"{x['property']} ({x['status'].replace('_', ' ')}): {x['note']}" for x in rd.get("defining_properties", [])
+                       if x["status"] in ("not_measured", "not_reproducible_on_earth")]
+        unsupported += [f"Missing evidence: {m}." for m in rd.get("critical_missing", [])]
+        proxy_active = any(d["data_status"] == "proxy" for d in dims if d["similarity"] is not None)
+        if coverage < MIN_RESULT_COVERAGE:
+            status, basis = "Insufficient data", f"only {coverage:.0%} of the weighted criteria have data for this cell"
+        elif rd.get("geology_defined"):
+            status, basis = "Geological suitability unverified", "this target is defined by geology the model cannot measure; the match is climate/terrain/surface similarity"
+        elif rd.get("screening_scope") != "full_environmental_screen" or coverage < 0.9 or proxy_active:
+            status, basis = "Partial environmental match", "some defining properties rely on proxies, are not reproducible on Earth, or have incomplete coverage"
+        else:
+            status, basis = "Supported by available evidence", "all criteria have data and none is a proxy"
+        return {"status": status, "status_basis": basis, "screening_scope": rd.get("screening_scope"), "categories": cats,
+                "supported": supported, "partially_supported": partial, "unsupported": unsupported}
+
+    def evidence_tier(r: dict, terrain: dict) -> dict:
+        """Global screening candidate -> locally supported region -> (never automatic) field-testing location."""
+        if terrain.get("state") == "verified_local":
+            return {"tier": "locally_supported_region", "label": "Locally supported region (30 m terrain checked)",
+                    "note": "30 m SRTM terrain was computed for the best cell. This is still a region, not a surveyed test site."}
+        return {"tier": "global_screening_candidate", "label": "Global screening candidate",
+                "note": "Ranked from a 2.5 degree (about 280 km) cell only. A field-testing location needs local imagery, geology, access and permission."}
+
     def target_card(t: dict, exp: dict) -> dict:
         card = {k: v for k, v in t.items() if k != "rules"}
         card["rules"] = t["rules"]
         card["is_draft"] = "draft" in str(t.get("_note", "")).lower()
         card["evidence"] = evidence["targets"].get(t["id"], {"grounded": 0, "total": len(t["rules"])})
         card["readiness"] = assess(exp, t)
+        card["screening"] = readiness.get(t["id"])
         return card
 
     def resolve_sources(exp: dict) -> list[dict]:
@@ -343,6 +397,8 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         # Strict gating: a cell whose required (gate) dimension has no data cannot be shown as a verified match.
         # They are excluded unless the user explicitly asks for the provisional view.
         gate_dims = [g["dim"] for g in pu.get("gates", []) if g["dim"] in grid.columns]
+        if readiness.get(tid, {}).get("requires_exposed_surface") and "D3_barren" in grid.columns and "D3_barren" not in gate_dims:
+            gate_dims.append("D3_barren")   # an ice/snow/water-covered cell is not exposed ground (see data/target_readiness.json)
         unverified_mask = grid[gate_dims].isna().any(axis=1) if gate_dims else pd.Series(False, index=grid.index)
         run_grid = grid if allow_unverified else grid[~unverified_mask]
         base["n_cells_excluded_unverified"] = 0 if allow_unverified else int(unverified_mask.sum())
@@ -376,7 +432,14 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
                             "dimensions": dims, "applications": exp["applications"],
                             "terrain": _terrain(stage2.get((lat, lon))),
                             "surface": _surface(feats.get((lat, lon)))})
+            regions[-1]["suitability"] = suitability(tid, dims, float(r["coverage"]))
+            regions[-1]["evidence_tier"] = evidence_tier(r, regions[-1]["terrain"])
         base["ranking_basis"] = out.get("ranking_basis", "evidence-adjusted score")
+        sp = stability.get(f"{experiment}/{tid}") if not custom and not allow_unverified else None
+        base["ranking_stability"] = None if sp is None else {
+            "weights_top1_within_5deg": sp["weights"]["top1_stays_within_5deg"], "weights_mean_jaccard_top5": sp["weights"]["mean_jaccard_top5"],
+            "missing_20pct_top1_within_5deg": sp["missing_20pct"]["top1_stays_within_5deg"], "missing_20pct_mean_jaccard_top5": sp["missing_20pct"]["mean_jaccard_top5"],
+            "note": "Precomputed (scripts/ranking_stability.py) for the default weights: how often the #1 region stays within 5 degrees when dimension weights are perturbed (sigma 0.3) or 20% of cells lose a dimension."}
         base["regions"] = regions
         base["n_cells_passed"] = out.get("n_cells_passed", 0)
         base["weights_used"] = out.get("weights_used", {})

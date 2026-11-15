@@ -39,6 +39,9 @@ U = {
     "mud_utopia": "https://science.nasa.gov/photojournal/candidate-mud-volcanoes-in-utopia-planitia/",
     "mud_acidalia": "https://ntrs.nasa.gov/citations/20100010305",
     "chloride": "https://www.nasa.gov/mission_pages/odyssey/odyssey-20080320.html",
+    "chloride_themis": "https://themis.asu.edu/news/salt-deposits-found-martian-highlands",
+    "mud_allen": "https://ntrs.nasa.gov/citations/20100033209",
+    "jezero_stack": "https://doi.org/10.1007/s11214-020-00739-x",
 }
 
 # id, target, location, lat, lon, quantity, value, units, resolution, period, uncertainty, instrument/method,
@@ -88,21 +91,111 @@ R = [
     ("C01", "MARS_CHLORIDE", "southern highlands", "", "", "number of candidate chloride deposits (THEMIS)", "~200", "deposits", "THEMIS", "2008 study", "n/s", "THEMIS spectral analysis", "NASA Odyssey release (2008)", "chloride", "reported ~200 sites; 1-25 km2 each; ~3.5-3.9 billion years", "inferred", "region", "search_summary", "Each deposit is far smaller than a 2.5 degree Earth cell."),
 ]
 
+# ----------------------------------------------------------------------------------------------------------------
+# Verification round 2026-11-16: the original pages of the 12 `search_summary` rows were opened again. Rows that were
+# confirmed are upgraded and their text corrected to what the page literally says; rows whose page could not be opened
+# (HTTP 403/404, certificate error, unreadable PDF) stay `search_summary` and are NOT treated as verified.
+# Corrections that CHANGE earlier content are listed in CORRECTION_LOG and in docs/PLANETARY_EVIDENCE_REPORT.md.
+# ----------------------------------------------------------------------------------------------------------------
+VER = "2026-11-16"
+UPDATES = {
+    "M09": dict(value="a bit over 100", extraction_method="page text: shadow 55 m at 26.5 deg incidence; scientists estimate depth 'a bit over 100 meters' (independent check: 55/tan(26.5deg) = ~110 m)",
+                spatial_resolution="NAC M126710873R, 400 m wide image", retrieval="primary_fetched", notes="Shadow-based; depth from the surrounding plain is larger (no figure given). Page gives no coordinates."),
+    "M10": dict(value="100-115", extraction_method="page text: width 'ranges from 100 to 115 meters across the sharp precipice'", retrieval="primary_fetched",
+                notes="Corrected from '~100 m' to the range stated on the page."),
+    "M11": dict(quantity="pit diameter and depth (2017 update)", value="58 x 49 diameter; 40 depth (original caption: ~65 diameter)", units="m", location="Marius Hills pit",
+                extraction_method="page text: original caption 'about 65 meters in diameter'; 2017 update 58 x 49 m and depth 40 m", retrieval="primary_fetched",
+                uncertainty="n/s", notes="The page does not state an earlier depth. Other published depths (34 m, 80-88 m) are kept separately in M11b and are NOT verified."),
+    "M12": dict(quantity="pit width", value="~130", units="m", location="Mare Ingenii pit (35.95 S, 166.06 E)", lat=-35.95, lon=166.06,
+                extraction_method="page text: 'about 130 m in diameter'; probably a partially collapsed lava tube, not confirmed", retrieval="primary_fetched",
+                notes="Corrected: the page states no depth. The earlier '~70 m deep, 120-130 m wide' entry could not be confirmed and was withdrawn (see M12b)."),
+    "M16": dict(value="~400 / <100", extraction_method="page text: equatorial noon 'almost 400K'; night 'below 100K'", retrieval="primary_fetched",
+                notes="Equatorial value, not a polar one. Earlier range '385-400 / 95-100 K' was a search paraphrase and is replaced by the page text."),
+    "J02": dict(lat=18, lon=77, value="45", extraction_method="page text: '28-mile-wide (45-kilometer)' crater on the western edge of Isidis Planitia 'at about 18 degrees latitude, 77 degrees longitude'",
+                retrieval="primary_fetched", notes="Delta and lake are described as what mission scientists 'believe' (interpretation). Hemisphere letters not given on the page; 77 E is the established value."),
+    "A01": dict(location="northern mid-latitudes mapped by SWIM", lat="0 to 60", lon="", quantity="latitude range of the SWIM mapping", value="0 to 60 N", units="deg",
+                extraction_method="page text: 'mapped the area from the equator to 60 degrees north latitude'; MRO, 2001 Mars Odyssey and Mars Global Surveyor data", retrieval="primary_fetched",
+                notes="Replaces the earlier '36-56 N, 132-176 W' Arcadia box, which could not be confirmed on the page and is withdrawn. The page states no ice depth."),
+    "C01": dict(value="~200", source_url=U["chloride_themis"], dataset_or_publication="Osterloo et al. 2008, Science 319:1651 (doi:10.1126/science.1150690); THEMIS team release",
+                extraction_method="page text: 'about 200 individual places' in the southern hemisphere (caption: 'more than 200 such features')", retrieval="primary_fetched",
+                observation_period="THEMIS imagery; deposits mostly middle to late Noachian (3.9-3.5 Ga)", notes="Counts are of candidate deposits from spectral analysis. Each deposit is far smaller than a 2.5 degree Earth cell."),
+}
+STILL_UNVERIFIED = {
+    "M15": "USGS page returned HTTP 403; value is from a search summary only.",
+    "J01": "JPL MarsNext page fails a certificate check. The JPL press kit gives only 'about 18 degrees latitude, 77 degrees longitude' (consistent, not the same precision); the -2656 m elevation is unconfirmed.",
+    "J03": "USGS Astropedia page returned HTTP 403; DTM bounds unconfirmed.",
+    "A03": "NASA newsletter PDF has no extractable text in this environment; the 15-60 m figure is unconfirmed.",
+}
+NEW = [
+    ("M11b", "MOON_LAVATUBE", "Marius Hills pit", "", "", "other published depths", "34 (NASA article) vs 80-88 (Kaguya)", "m", "n/s", "n/s", "values disagree", "n/s",
+     "NASA articles / Kaguya (as reported in search summaries)", "pit_marius", "listed from search summaries; not found on the LROC page", "derived", "site", "search_summary", "UNVERIFIED. Do not quote; conflicts with the 40 m LROC value."),
+    ("M12b", "MOON_LAVATUBE", "Mare Ingenii pit", "", "", "pit depth", "not stated", "", "not applicable", "not applicable", "not applicable", "none (no depth stated)", "LROC image page 695", "pit_ingenii",
+     "page states no depth; an earlier '~70 m' entry was withdrawn", "derived", "site", "primary_fetched", "Documents the withdrawal of an unverified value."),
+    ("M18", "MOON_SP_RIDGE", "south-polar crater rims with continuous sunlight (generic)", "", "", "steady surface temperature on continuously lit rims", "~220", "K", "n/s", "LRO Diviner mapping", "n/s",
+     "LRO Diviner (infrared radiometer)", "Diviner science page (UCLA)", "diviner", "page text: rims in continuous sunlight stay near 'around 220K'", "observed", "region", "primary_fetched",
+     "Generic polar-rim statement, not a measurement at one named ridge."),
+    ("C02", "MARS_CHLORIDE", "southern highlands deposits", "", "", "deposit area", "1 to 25", "km2", "THEMIS", "n/s", "n/s", "THEMIS spectral analysis",
+     "THEMIS team release on Osterloo et al. 2008", "chloride_themis", "page text: 'about one square kilometer to about 25 square kilometers'", "inferred", "region", "primary_fetched",
+     "Roughly 4 orders of magnitude smaller than a 2.5 degree Earth cell."),
+    ("U03", "MARS_MUDVOLC", "southern Acidalia Planitia", "", "", "cones and domes interpreted as mud-volcano analogs", ">18,000 identified (est. ~40,000)", "features", "n/s", "n/s", "mapping-based estimate",
+     "orbital image mapping (as summarised in the abstract)", "Allen & Oehler 2010, AGU Fall Meeting abstract (NTRS 20100033209)", "mud_allen",
+     "abstract text: over 18,000 features identified in selected regions; estimated ~40,000 across the area", "inferred", "region", "primary_fetched",
+     "Morphological resemblance only; origin remains debated (see U02)."),
+    ("U04", "MARS_MUDVOLC", "Azerbaijan (Earth)", "", "", "Earth reference for Martian mud volcanoes", "largest onshore concentration", "", "n/a", "n/a", "n/a",
+     "field and sample study (as summarised in the abstract)", "Allen & Oehler 2010 (NTRS 20100033209)", "mud_allen",
+     "abstract text: 'The largest concentration of onshore features is in Azerbaijan, near the western edge of the Caspian Sea'", "inferred", "region", "primary_fetched",
+     "Names the Earth analog region; the closest morphologic analogs named are submarine (Gulf of Cadiz), which a land grid cannot test."),
+]
+R = R + NEW
+CORRECTION_LOG = [
+    "M10: diameter '~100 m' -> '100-115 m' (page text).",
+    "M11: single mixed entry split; only the 40 m depth / 58x49 m diameter (LROC 2017 update) is verified; 34 m and 80-88 m moved to unverified M11b.",
+    "M12: '~70 m deep' withdrawn (page states no depth); width ~130 m and coordinates 35.95 S 166.06 E added.",
+    "M16: '385-400 / 95-100 K' replaced by the page statement 'almost 400 K' / 'below 100 K'.",
+    "A01: Arcadia box '36-56 N, 132-176 W' withdrawn (not on cited page); replaced by the verified SWIM latitude range 0-60 N.",
+]
+
+
+# evidence quality system, kept separate from data coverage and from the recommendation score
+def quality(row):
+    if row["verification_status"] != "verified_primary":
+        return "unverified"
+    if row["scope"] == "body":
+        return "generic_property"
+    if row["evidence_class"] == "inferred":
+        return "supported_inference"
+    if row["id"] in ("M02", "M06", "M07", "M08", "M13"):
+        return "published_model"
+    if row["evidence_class"] == "derived":
+        return "derived_measurement"
+    return "primary_measured"
+
+
 COLS = ["id", "target_id", "location", "lat", "lon", "quantity", "value", "units", "spatial_resolution", "observation_period", "uncertainty",
-        "instrument_or_method", "dataset_or_publication", "source_url", "extraction_method", "evidence_class", "scope", "retrieval", "retrieved_on", "notes"]
+        "instrument_or_method", "dataset_or_publication", "source_url", "extraction_method", "evidence_class", "scope", "retrieval", "retrieved_on", "verification_status", "evidence_quality", "notes"]
 
 
 def main():
     rows = []
     for r in R:
         (i, t, loc, lat, lon, q, val, un, res, per, unc, ins, ds, uk, ex, cl, sc, ret, note) = r
-        rows.append(dict(zip(COLS, [i, t, loc, lat, lon, q, val, un, res, per, unc, ins, ds, U[uk], ex, cl, sc, ret, RET, note])))
+        row = dict(zip(COLS, [i, t, loc, lat, lon, q, val, un, res, per, unc, ins, ds, U.get(uk, uk), ex, cl, sc, ret, RET, "", "", note]))
+        if i in UPDATES:
+            row.update(UPDATES[i])
+            row["retrieved_on"] = VER
+        row["verification_status"] = "verified_primary" if row["retrieval"] == "primary_fetched" else "unverified_search_summary"
+        if i in STILL_UNVERIFIED:
+            row["notes"] = (row["notes"] + " STILL UNVERIFIED: " + STILL_UNVERIFIED[i]).strip()
+        row["evidence_quality"] = quality(row)
+        rows.append(row)
     with open(ROOT / "data/planetary_measurements.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=COLS)
         w.writeheader()
         w.writerows(rows)
     json.dump(rows, open(ROOT / "data/planetary_measurements.json", "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     from collections import Counter
+    from collections import Counter as _C
+    print("quality:", dict(_C(r["evidence_quality"] for r in rows)))
     print(len(rows), "rows;", dict(Counter(r["scope"] for r in rows)), dict(Counter(r["retrieval"] for r in rows)))
 
 

@@ -45,6 +45,13 @@ All 14 site-target pairs (10 sites): median percentile 0.788 (95% site-cluster i
 ## Tests
 Backend pytest suite (engine, API, real-data provenance, evidence/measurement schema), frontend vitest, TypeScript check, production build; see the final run in the session report. Browser review of the evidence panel and adjusted scores.
 
+## Final scientific phase (2026-11-16; `docs/SCIENTIFIC_VALIDATION_REPORT_V3.md`, `docs/ANALOG_DATASET_V3.md`)
+- Planetary evidence: 35 rows, 30 primary-fetched, 5 unverified (was 29 / 17 / 12); five corrections where pages differed from earlier summaries; an evidence-quality grade per row.
+- Validation: dataset v3 with 18 sites (11 historical, 4 eligible new, 3 exploratory new), 17 rejected candidates with reasons, 25 controls (19 hard) with written rationale; cohorts A historical / B development / C frozen independent (hash-locked, scored once). Primary pairs: A+B 14-15 pairs from 10-11 sites (median 0.82, AUC vs hard controls 0.83 with the adopted rule); frozen C: 3 sites, median 0.80, unreliable (Gobustan mud volcano 0.33).
+- Model/API: exposed-surface requirement for ground-defined targets (the Antarctic ice sheet no longer dominates mud-volcano results), per-region suitability status, evidence tier, ranking-stability note. Weights unchanged.
+- Findings: D3, D8, D2 carry the score; D1/D6/D7 are redundant (rho 0.93-0.97); D4 has a scale mismatch; single-cell #1 regions are unstable (65% under weight noise, 36% under 20% missing data); lava-tube, mare, mud-volcano, Jezero, chloride and dune targets are climate/terrain similarity only.
+- Tests: 58 backend, 6 frontend, tsc, build.
+
 ## Blocked / needs input
 - Multi-year climate: NDVI (~100 MB/month) and land-surface temperature (~70 MB/month) are 2024 only; each extra year is about 2 GB. Not downloaded (the brief says to ask before large downloads).
 - Lithology (GLiM) is not NASA data and needs GDAL for its geodatabase: not integrated.

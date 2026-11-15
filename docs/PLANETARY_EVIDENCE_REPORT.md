@@ -63,3 +63,25 @@ Direct for the purpose stated: D4 (relief), D8 (diurnal swing). Derived but indi
 - No Earth surface reproduces lunar PSR temperatures (25-40 K), vacuum, 1/6 g, radiation, or regolith chemistry; Mars-like cold deserts do not reproduce 0.6 kPa CO2 atmosphere or perchlorates.
 - Site features (a 100 m pit, a 1-25 km2 chloride deposit, a 21 km crater) are below 2.5 degree (~280 km) resolution. Results are *regions to investigate*, not sites.
 - Several planetary datasets (LOLA, Diviner, MOLA, HiRISE) require interactive Trek/PDS work or large downloads; these are listed with exact retrieval steps in `docs/MANUAL_EVIDENCE_NEEDED.md`.
+
+## 6. Verification round (2026-11-16)
+
+The original pages of the 12 `search_summary` rows were opened again. Result: **35 rows, 30 `primary_fetched`, 5 still unverified** (`M11b`, `M15`, `J01`, `J03`, `A03`).
+Pages that could not be opened (HTTP 403/404, certificate error, PDF without extractable text) were left unverified and are not treated as evidence.
+
+Evidence quality (kept separate from data coverage and from the recommendation score; column `evidence_quality`):
+primary measured 7, derived measurement 7, published model 5, supported inference 9, generic planetary property 2, unverified 5. No row is graded "team hypothesis"; hypotheses live in the analog dataset, not here.
+
+Corrections made because the page said something different (full list in `CORRECTION_LOG` in `scripts/build_planetary_measurements.py`):
+- M10 Mare Tranquillitatis pit width was "~100 m"; the page says 100-115 m. M09 depth "a bit over 100 m" confirmed (55 m shadow at 26.5 degrees incidence; independent check about 110 m).
+- M11 mixed several depths for the Marius Hills pit; only the LROC page values (about 65 m, updated to 58 x 49 m, depth 40 m) are verified. The other values (34 m, 80-88 m) are kept in unverified M11b.
+- M12 Mare Ingenii pit: the page states a width of about 130 m at 35.95 S, 166.06 E and **no depth**. The earlier "~70 m deep" entry was withdrawn.
+- M16 Diviner: "almost 400 K" at equatorial noon and "below 100 K" at night (the earlier paraphrase 385-400 / 95-100 K was replaced). New M18: continuously lit polar rims stay near 220 K (generic polar-rim statement).
+- J02 Jezero: 45 km diameter and "about 18 degrees latitude, 77 degrees longitude" confirmed on the JPL press kit. J01 (-2656 m MOLA reference elevation) remains unverified.
+- A01: the Arcadia box (36-56 N, 132-176 W) could not be found on the cited page and was withdrawn; replaced by the verified SWIM mapping range, equator to 60 N (the page gives no ice depth).
+- C01 chloride count confirmed (about 200 sites, 1-25 km2 each, Noachian) on the THEMIS release; Osterloo et al. 2008, Science 319:1651 added as the publication.
+- New: U03 (over 18,000 Acidalia cones/domes identified, about 40,000 estimated; Allen and Oehler 2010) and U04 (Azerbaijan named as the largest onshore concentration).
+
+Still unverified and why: M15 (USGS page 403), J01 (certificate error), J03 (USGS Astropedia 403), A03 (NASA newsletter PDF without text), M11b (values not on the LROC page).
+
+Location-specific checks: whole-body values are stored with `scope = body` (M17, A05) and are never shown as site values; the Diviner PSR minimum (25 K) is a region statement, not a Shackleton value; pit measurements describe the visible pit, not the tube; snow cover is never used as a subsurface-ice measurement.

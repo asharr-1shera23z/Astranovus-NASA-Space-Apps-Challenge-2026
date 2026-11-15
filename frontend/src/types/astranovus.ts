@@ -83,6 +83,40 @@ export interface TargetCard {
   is_draft: boolean;
   evidence: { grounded: number; total: number };
   readiness: Readiness;
+  screening?: TargetScreening | null;
+}
+
+export interface TargetScreening {
+  screening_scope: string;
+  geology_defined: boolean;
+  requires_exposed_surface: boolean;
+  defining_properties: { property: string; status: string; dimension: string | null; note: string }[];
+  critical_missing: string[];
+  summary: string;
+}
+
+export interface Suitability {
+  status: string;
+  status_basis: string;
+  screening_scope: string | null;
+  categories: Record<string, { similarity: number | null; dimensions: string[]; data_available: string; basis: string }>;
+  supported: string[];
+  partially_supported: string[];
+  unsupported: string[];
+}
+
+export interface RankingStability {
+  weights_top1_within_5deg: number;
+  weights_mean_jaccard_top5: number;
+  missing_20pct_top1_within_5deg: number;
+  missing_20pct_mean_jaccard_top5: number;
+  note: string;
+}
+
+export interface EvidenceTier {
+  tier: string;
+  label: string;
+  note: string;
 }
 
 export interface SourceLink {
@@ -164,6 +198,8 @@ export interface Region {
   n_cells: number;
   best_score: number;
   evidence_adjusted_score?: number;
+  suitability?: Suitability;
+  evidence_tier?: EvidenceTier;
   mean_score: number;
   coverage: number;
   confidence: Confidence;
@@ -212,6 +248,7 @@ export interface MissionResult {
   regions: Region[];
   n_cells_passed: number;
   ranking_basis?: string;
+  ranking_stability?: RankingStability | null;
   n_cells_excluded_unverified?: number;
   weights_used: Record<string, number>;
 }

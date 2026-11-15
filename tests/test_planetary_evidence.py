@@ -74,3 +74,22 @@ def test_experiment_validation_has_no_violations(path):
     ev = json.load(open(ROOT / path, encoding="utf-8"))
     assert ev["problems"] == []
     assert len(ev["rows"]) >= 25
+
+
+def test_verification_status_and_quality_grades_are_consistent():
+    assert set(MEAS.verification_status) <= {"verified_primary", "unverified_search_summary"}
+    allowed = {"primary_measured", "derived_measurement", "published_model", "supported_inference", "generic_property", "unverified"}
+    assert set(MEAS.evidence_quality) <= allowed
+    unver = MEAS[MEAS.verification_status == "unverified_search_summary"]
+    assert (unver.evidence_quality == "unverified").all()          # a search summary can never carry a confidence grade
+    assert (unver.retrieval == "search_summary").all()
+    ver = MEAS[MEAS.verification_status == "verified_primary"]
+    assert (ver.retrieval == "primary_fetched").all() and (ver.evidence_quality != "unverified").all()
+    assert (MEAS[MEAS.scope == "body"].evidence_quality.isin(["generic_property", "unverified"])).all()
+
+
+def test_withdrawn_values_do_not_reappear_as_verified():
+    # the earlier "~70 m deep" Mare Ingenii pit and the Arcadia 36-56 N box were not on their cited pages
+    joined = " ".join(MEAS[MEAS.verification_status == "verified_primary"].value.astype(str))
+    assert "~70" not in joined and "36-56" not in joined
+    assert MEAS[MEAS.id == "M12"].value.iloc[0].strip() == "~130"
