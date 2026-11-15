@@ -2,8 +2,9 @@ import { Download, Globe2, Map as MapIcon } from 'lucide-react';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useMission } from '../state/MissionContext';
 import type { Region } from '../types/astranovus';
-import { BODY_ACCENT, bodyLabel, buildRegionsCsv, dimLabel, pct, regionsToMapSites, suitabilitySummary } from '../utils/mission';
+import { BODY_ACCENT, bodyLabel, buildRegionsCsv, dimLabel, pct, rankScore, regionsToMapSites, suitabilitySummary } from '../utils/mission';
 import { LeafletAnalogMap } from './LeafletAnalogMap';
+import { ReferenceEvidence } from './ReferenceEvidence';
 import { RegionDetail } from './RegionDetail';
 import { WeightTuner } from './WeightTuner';
 import { ErrorPanel, InfoNote, LoadingPanel, StateChip } from './StatusViews';
@@ -81,6 +82,8 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
           source (qualitative direction only; no LOLA, MOLA, Diviner or CRISM values are used in scoring). Rankings are only as good as this profile.
         </InfoNote>
       )}
+
+      <ReferenceEvidence targetId={result.target_info.id} targetName={result.target_info.name} />
 
       {unavailable && (
         <div role="alert" className="bg-[#FFFFFF] border-2 border-[#B42318]/50 rounded-2xl p-6 space-y-4">
@@ -195,9 +198,9 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
                         </div>
                         <div className="text-right shrink-0">
                           <div className="font-mono font-bold text-xl tabular-nums" style={{ color: accent }}>
-                            {r.best_score.toFixed(1)}
+                            {rankScore(r).toFixed(1)}
                           </div>
-                          <div className="text-[10px] text-[#68788F]">/ 100 similarity</div>
+                          <div className="text-[10px] text-[#68788F]">adjusted · raw {r.best_score.toFixed(1)}</div>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold">
@@ -295,9 +298,9 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
                     <h3 className="font-display font-bold text-base text-[#142B50] leading-snug">{selected.location_label}</h3>
                     <div className="grid grid-cols-2 gap-2 bg-[#EDF3FA] rounded-xl p-3 text-xs">
                       <div>
-                        <div className="text-[10px] text-[#68788F]">Similarity</div>
+                        <div className="text-[10px] text-[#68788F]">Adjusted score (raw {selected.best_score.toFixed(1)})</div>
                         <div className="font-mono font-bold text-lg tabular-nums" style={{ color: accent }}>
-                          {selected.best_score.toFixed(1)}
+                          {rankScore(selected).toFixed(1)}
                         </div>
                       </div>
                       <div>

@@ -273,6 +273,25 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         return _py({"notice": info["notice"], "classification": info["classification"],
                     "sources_verified_on": info["sources_verified_on"], "experiments": items})
 
+    @router.get("/evidence/{target_id}")
+    def target_evidence_detail(target_id: str):
+        """Machine-readable evidence for one reference site: per-rule evidence status + numerical measurements with provenance."""
+        if target_id not in targets:
+            raise HTTPException(404, f"unknown target {target_id}")
+        import csv
+        rules, meas = [], []
+        p1 = root / "data/target_evidence.csv"
+        p2 = root / "data/planetary_measurements.csv"
+        if p1.exists():
+            rules = [r for r in csv.DictReader(open(p1, encoding="utf-8")) if r["target_id"] == target_id]
+        if p2.exists():
+            meas = [r for r in csv.DictReader(open(p2, encoding="utf-8")) if r["target_id"] == target_id]
+        return {"target_id": target_id, "rules": rules, "measurements": meas,
+                "counts": {"measurements_site": sum(1 for m in meas if m["scope"] == "site"), "measurements_region": sum(1 for m in meas if m["scope"] == "region"),
+                           "measurements_body_generic": sum(1 for m in meas if m["scope"] == "body"), "rules_supported": sum(1 for r in rules if r["status"] == "supported"),
+                           "rules_retired": sum(1 for r in rules if r["status"] == "retired"), "rules_unverified": sum(1 for r in rules if r["status"] == "unverified")},
+                "note": "Values are quoted from the cited sources; ASTRANOVUS did not measure them. 'search_summary' retrieval means the primary page could not be fetched: re-verify before relying on it."}
+
     @router.get("/validation")
     def get_validation():
         p = root / "data/validation_summary.json"
@@ -327,7 +346,7 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         unverified_mask = grid[gate_dims].isna().any(axis=1) if gate_dims else pd.Series(False, index=grid.index)
         run_grid = grid if allow_unverified else grid[~unverified_mask]
         base["n_cells_excluded_unverified"] = 0 if allow_unverified else int(unverified_mask.sum())
-        out = _recommend(run_grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top, top_pct=TOP_PCT)
+        out = _recommend(run_grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top, top_pct=TOP_PCT, rank_by="adjusted")
         base["provisional"] = assessment["state"] == "unavailable"
         regions = []
         for r in out.get("regions", []):
@@ -357,6 +376,7 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
                             "dimensions": dims, "applications": exp["applications"],
                             "terrain": _terrain(stage2.get((lat, lon))),
                             "surface": _surface(feats.get((lat, lon)))})
+        base["ranking_basis"] = out.get("ranking_basis", "evidence-adjusted score")
         base["regions"] = regions
         base["n_cells_passed"] = out.get("n_cells_passed", 0)
         base["weights_used"] = out.get("weights_used", {})

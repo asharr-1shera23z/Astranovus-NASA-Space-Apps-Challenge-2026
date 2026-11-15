@@ -9,7 +9,7 @@ import { ScoreDonut } from '../components/ScoreDonut';
 import { InfoNote, LoadingPanel } from '../components/StatusViews';
 import { useMission } from '../state/MissionContext';
 import type { CompareResponse } from '../types/astranovus';
-import { BODY_ACCENT, bodyLabel, dimsWithData, pct, suitabilitySummary } from '../utils/mission';
+import { BODY_ACCENT, bodyLabel, dimsWithData, pct, rankScore, suitabilitySummary } from '../utils/mission';
 
 export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }) {
   const m = useMission();
@@ -95,14 +95,14 @@ export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4 bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-6 space-y-4">
-          <ScoreDonut score={r.best_score} accentColor={accent} label={`${r.confidence} confidence`} />
+          <ScoreDonut score={rankScore(r)} accentColor={accent} label={`${r.confidence} confidence`} />
           <dl className="grid grid-cols-2 gap-3 text-xs">
             {[
               ['Coordinates', `${r.lat.toFixed(2)}, ${r.lon.toFixed(2)}`],
               ['Best cell', `${r.best_cell.lat}, ${r.best_cell.lon}`],
               ['Data coverage', pct(r.coverage)],
               ['Cells in region', String(r.n_cells)],
-              ['Mean of region', r.mean_score.toFixed(1)],
+              ['Raw similarity', r.best_score.toFixed(1)],
               ['Mission profile', result.experiment.purpose.id],
             ].map(([k, v]) => (
               <div key={k} className="bg-[#F4F8FF] border border-[#E1E8F0] rounded-lg px-3 py-2">

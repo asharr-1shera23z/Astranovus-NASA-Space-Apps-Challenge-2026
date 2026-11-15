@@ -50,6 +50,12 @@ Per dimension similarity `s`: *high* → p, *low* → 1−p, *band* → 1 inside
 4. UI data-state rule (backend/mission_api.py): *unavailable* if a gate dimension has no data at all, or under 50 % of the weighted criteria have data; *partial* if any used dimension is missing, a proxy, or defined in under half of all cells; otherwise *ready*. A clearly labelled provisional ranking can be requested for unavailable cases.
 5. One draft variation exists: "Regolith & dust" adds ×1.5 on aridity and a dryness gate (≥0.4, copied from POWER_THERMAL). It is flagged as an ASTRANOVUS assumption.
 
+### Evidence-adjusted ranking (added 2026-11-16)
+The raw score divides by the weight of the dimensions that have data, so a cell missing a weak dimension is not penalised. Measured effect: score-vs-coverage Spearman -0.73 / -0.74 / -0.71 for MOON_SP_RIDGE / MOON_PSR / MARS_ICE. Regions are therefore ranked by `score_adj = coverage * score + (1 - coverage) * 50` (50 = chance level). The raw score is still returned and displayed; the API field `ranking_basis` states which is used. Audit record: no weight, gate or band changed; only the ordering key changed, justified by the coverage-bias measurement in `docs/SCIENTIFIC_VALIDATION_REPORT.md`, not by validation scores.
+
+### Rule-change audit
+Four rules were retired earlier on evidence (MOON_PSR D7, MOON_SP_RIDGE D5, MARS_MUDVOLC D5, MARS_AEOLIAN D5; reasons in `data/targets.json`). This round changed none. The drop-one ablation suggests the D4 terrain rule hurts validation, but it is left unchanged to avoid tuning on a 14-pair validation set; it needs an independent cohort first.
+
 ## 6. Limits
 2.5° grid (~280 km cells); a single year (2024) of MODIS/GPM; 1-km terrain and no rock data; target rules are drafts (see TARGET_EVIDENCE.md); percentile ranking compares Earth cells to each
 other, not physical Moon/Mars values; region names are approximate bounding-box labels.

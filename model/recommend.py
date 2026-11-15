@@ -52,7 +52,7 @@ def _peak_regions(pts: np.ndarray, radius_deg: float) -> list[int]:
     return label.tolist()
 
 
-def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10, top_pct=0.15, region_radius_deg=15.0):
+def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10, top_pct=0.15, region_radius_deg=15.0, rank_by="score"):
     t = apply_purpose(target, purpose)
     sc = score_grid(grid, t).dropna(subset=["score"])
     sc = sc[sc.coverage >= min_coverage]
@@ -63,13 +63,14 @@ def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10
         if ok: keep.append(r.cell_id); notes_by[r.cell_id] = notes
     sc = sc[sc.cell_id.isin(keep)]
     if sc.empty: return {"regions": [], "n_cells_passed": 0}
-    cut = sc.score.quantile(1 - top_pct)
-    top = sc[sc.score >= cut].sort_values("score", ascending=False, kind="stable").reset_index(drop=True)
+    col = "score_adj" if rank_by == "adjusted" else "score"     # ranking basis (default keeps the original behaviour)
+    cut = sc[col].quantile(1 - top_pct)
+    top = sc[sc[col] >= cut].sort_values(col, ascending=False, kind="stable").reset_index(drop=True)
     top["comp"] = _peak_regions(top[["lat", "lon"]].to_numpy(), region_radius_deg)
     src = {d["id"]: d["earth_source"] for d in dims_meta}
     regions = []
     for _, grp in top.groupby("comp"):
-        best = grp.loc[grp.score.idxmax()]; row = g.loc[best.cell_id]
+        best = grp.loc[grp[col].idxmax()]; row = g.loc[best.cell_id]
         rows = []
         for dim, rule in t["rules"].items():
             p = row.get(dim, np.nan)
@@ -83,13 +84,13 @@ def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10
         regions.append({
             "lat": round(float(grp.lat.mean()), 2), "lon": round(float(grp.lon.mean()), 2),
             "best_cell": {"lat": float(best.lat), "lon": float(best.lon)},
-            "n_cells": int(len(grp)), "best_score": float(best.score), "mean_score": round(float(grp.score.mean()), 2),
+            "n_cells": int(len(grp)), "best_score": float(best.score), "evidence_adjusted_score": float(best.score_adj), "mean_score": round(float(grp.score.mean()), 2),
             "coverage": float(best.coverage), "confidence": conf,
             "why_match": [r for r in rows if r["similarity"] >= 0.7][:3],
             "weak_points": [r for r in rows if r["similarity"] < 0.5][:3],
             "missing_data": missing, "notes": notes_by.get(int(best.cell_id), []),
         })
-    regions.sort(key=lambda r: (-r["best_score"], -r["n_cells"]))
+    regions.sort(key=lambda r: (-(r["evidence_adjusted_score"] if rank_by == "adjusted" else r["best_score"]), -r["n_cells"]))
     for i, r in enumerate(regions[:top_regions], 1): r["rank"] = i
     return {"regions": regions[:top_regions], "n_cells_passed": int(len(sc)),
-            "target": target["id"], "weights_used": {d: round(r["weight"], 2) for d, r in t["rules"].items()}}
+            "target": target["id"], "ranking_basis": "evidence-adjusted score" if rank_by == "adjusted" else "raw similarity score", "weights_used": {d: round(r["weight"], 2) for d, r in t["rules"].items()}}

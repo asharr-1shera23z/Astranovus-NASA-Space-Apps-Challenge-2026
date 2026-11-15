@@ -3,7 +3,11 @@
     "retrieved_on": "2026-11-15",
     "purpose": "Validation set for ASTRANOVUS. Positives are Earth sites NASA publishes as planetary-analog field sites. Controls are lowland, vegetated or humid regions chosen BY CONSTRUCTION to be poor analogs (no citation: this is a sanity check, not evidence). The target mapping (which Moon/Mars reference each site should resemble) is an ASTRANOVUS judgement and is flagged as such.",
     "coordinates": "Approximate site centres in decimal degrees. The Earth grid has 2.5 degree cells, so each site is evaluated at its nearest grid cell, which is far coarser than the site itself.",
-    "excluded_unverified": []
+    "excluded_unverified": [],
+    "cohorts": {
+      "v1": "sites scored and examined before this protocol existed (their results were visible during development, so they are not pristine held-out data)",
+      "v2_prospective": "sites added after the v1 diagnostics; first scored by this run and reported separately; never used for any rule change"
+    }
   },
   "positives": [
     {
@@ -21,7 +25,8 @@
           "https://science.nasa.gov/solar-system/planetary-analogs/",
           "https://www.nasa.gov/analog-missions/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "devon_haughton",
@@ -37,7 +42,8 @@
           "https://ntrs.nasa.gov/citations/20130012984",
           "https://science.nasa.gov/solar-system/planetary-analogs/10-things-to-know-about-planetary-analogs/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "lava_beds",
@@ -52,7 +58,8 @@
         "urls": [
           "https://science.nasa.gov/solar-system/planetary-analogs/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "kilauea",
@@ -67,7 +74,8 @@
         "urls": [
           "https://www.nasa.gov/analog-missions/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "iceland",
@@ -78,11 +86,13 @@
         "MOON_LAVATUBE"
       ],
       "citation": {
-        "text": "NASA Science lists volcanic fields in Iceland among mission-analog sites.",
+        "text": "NASA: Iceland has served as a lunar stand-in for astronaut geology training since Apollo (1967), and the Artemis II crew trained there in 2024; both Iceland and the Moon feature basalts and breccias.",
         "urls": [
+          "https://science.nasa.gov/missions/artemis/nasas-artemis-ii-crew-uses-iceland-terrain-for-lunar-training/",
           "https://science.nasa.gov/solar-system/planetary-analogs/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "death_valley",
@@ -98,7 +108,8 @@
         "urls": [
           "https://science.nasa.gov/solar-system/planetary-analogs/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "colorado_desert",
@@ -114,7 +125,8 @@
         "urls": [
           "https://www.nasa.gov/solar-system/moon/nasa-testing-advanced-capabilities-for-moon-mars-rovers/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "mcmurdo_dry_valleys",
@@ -130,7 +142,8 @@
           "https://ntrs.nasa.gov/citations/20100003844",
           "https://astrobiology.nasa.gov/news/cryostructures-in-antarctic-permafrost/"
         ]
-      }
+      },
+      "cohort": "v1"
     },
     {
       "id": "svalbard",
@@ -146,7 +159,45 @@
           "https://science.gsfc.nasa.gov/solarsystem/projects/247",
           "https://ntrs.nasa.gov/citations/20110007828"
         ]
-      }
+      },
+      "cohort": "v1"
+    },
+    {
+      "id": "craters_of_the_moon",
+      "name": "Craters of the Moon National Monument, Idaho, USA",
+      "lat": 43.2,
+      "lon": -113.5,
+      "targets": [
+        "MOON_MARE",
+        "MOON_LAVATUBE"
+      ],
+      "cohort": "v2_prospective",
+      "citation": {
+        "text": "US National Park Service: Apollo 14 crew members visited in August 1969 to study volcanic geology (the NPS FAQ notes they did not formally train there); NASA Earth Observatory describes the lava landscape as lunar-like. Basaltic lava field with lava tubes.",
+        "urls": [
+          "https://www.nps.gov/crmo/learn/historyculture/space-exploration-research-and-astronaut-training.htm",
+          "https://science.nasa.gov/earth/earth-observatory/moonscapes-of-idaho-154207/"
+        ]
+      },
+      "limitation": "Basalt field analog for geology/lava-tube morphology only; semi-arid with sagebrush cover, not a thermal or ice analog."
+    },
+    {
+      "id": "mdrs_utah",
+      "name": "Mars Desert Research Station area (San Rafael Swell), Utah, USA",
+      "lat": 38.4,
+      "lon": -110.8,
+      "targets": [
+        "MARS_JEZERO"
+      ],
+      "cohort": "v2_prospective",
+      "citation": {
+        "text": "NASA NTRS / NASA Astrobiology Institute reports describe the Morrison Formation area around MDRS as an analogue for Mars geomorphology and sedimentary processes (soil cores from the main geologic units).",
+        "urls": [
+          "https://ntrs.nasa.gov/citations/20110014304",
+          "https://astrobiology.nasa.gov/nai/annual-reports/2014/uwis/project-1a-field-analog-geology-and-astrobiology-in-support-of-mars-exploration/index.html"
+        ]
+      },
+      "limitation": "Sedimentary-geology and crew-operations analog; semi-arid and mild, so a weak match for Jezero's cold, thermal and igneous character."
     }
   ],
   "controls": [
@@ -237,6 +288,55 @@
       "lon": -4.0,
       "hard": true,
       "why": "dry summers but vegetated and mild"
+    },
+    {
+      "id": "greenland_ice_sheet",
+      "name": "Greenland ice sheet",
+      "lat": 72.0,
+      "lon": -40.0,
+      "hard": true,
+      "targets": [
+        "MARS_JEZERO",
+        "MARS_CHLORIDE",
+        "MOON_MARE"
+      ],
+      "why": "cold and dry but ice-covered: fails the bare-ground criterion of dry geology/rover targets"
+    },
+    {
+      "id": "antarctic_plateau",
+      "name": "East Antarctic plateau",
+      "lat": -80.0,
+      "lon": 100.0,
+      "hard": true,
+      "targets": [
+        "MARS_JEZERO",
+        "MARS_CHLORIDE",
+        "MOON_MARE"
+      ],
+      "why": "cold and dry but ice-covered: no exposed ground"
+    },
+    {
+      "id": "sahara_for_ice",
+      "name": "Central Sahara",
+      "lat": 23.0,
+      "lon": 13.0,
+      "hard": true,
+      "targets": [
+        "MARS_ICE"
+      ],
+      "why": "matches aridity and bare ground but not temperature or ice: a regions-that-match-dryness-but-not-cold control"
+    },
+    {
+      "id": "amazon_highlands_for_terrain",
+      "name": "Guiana Highlands (rugged but humid, forested)",
+      "lat": 5.0,
+      "lon": -61.0,
+      "hard": true,
+      "targets": [
+        "MOON_LAVATUBE",
+        "MARS_JEZERO"
+      ],
+      "why": "rugged terrain but wet and forested: matches terrain, fails aridity and barrenness"
     }
   ],
   "hypotheses_pakistan": {
@@ -258,7 +358,8 @@
         "lon": 65.5,
         "targets": [
           "MARS_MUDVOLC"
-        ]
+        ],
+        "literature_note": "A satellite-imagery study indexed by ITU reports >80 mud volcanoes in Pakistan clustered in Hingol National Park. No source retrieved uses Hingol as a Mars analog; the closest Mars-analog comparisons in retrieved sources are Azerbaijan and the Gulf of Cadiz (Allen and Oehler, NASA JSC)."
       },
       {
         "id": "khewra_salt_range",

@@ -41,6 +41,9 @@ synthetic sample set `ASTRANOVUS_ALLOW_SAMPLE=1`; the UI then shows a red warnin
 python scripts/validate_data.py
 python scripts/build_target_evidence.py
 python scripts/validate_known_analogs.py                     # writes docs/VALIDATION.md
+python scripts/sensitivity_analysis.py                        # writes data/sensitivity_summary.json
+python scripts/experiment_validation.py                       # writes docs/EXPERIMENT_VALIDATION.md
+python scripts/build_planetary_measurements.py                # writes data/planetary_measurements.csv/.json
 ```
 
 ## Environment variables
@@ -64,7 +67,7 @@ cd frontend && npm run lint && npm test && npm run build
 * Results are candidate **areas** (2.5 degree cells), not verified ground-test sites. See `docs/PROJECT_STATUS.md` for everything blocked or pending.
 
 ## Docs
-`docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` ·
+`docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` · `docs/SCIENTIFIC_VALIDATION_REPORT.md` · `docs/PLANETARY_EVIDENCE_REPORT.md` · `docs/EXPERIMENT_VALIDATION.md` ·
 `docs/PROJECT_STATUS.md` · `docs/SOLUTION.md` · `docs/MANUAL_EVIDENCE_NEEDED.md` · `docs/PRE_DEPLOYMENT_CHECKLIST.md` · `docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
 
 ## Rules

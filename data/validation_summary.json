@@ -1,4 +1,11 @@
 {
+ "adjusted_basis": {
+  "median_percentile_raw": 0.788,
+  "median_percentile_adjusted": 0.837,
+  "mean_auc_hard_by_target_raw": 0.755,
+  "mean_auc_hard_by_target_adjusted": 0.777,
+  "note": "The adjusted score was adopted because of a documented coverage bias (score vs coverage rank correlation down to -0.7 for polar targets), not because of these numbers."
+ },
  "grid_built_utc": "2026-11-15T05:15:42+00:00",
  "grid_cells": 3435,
  "grid_step_deg": 2.5,
@@ -7,15 +14,31 @@
   "n_sites": 4,
   "median_percentile": 0.811,
   "median_ci95": [
-   0.55,
-   0.966
+   0.439,
+   0.948
   ],
+  "median_ci95_unit": "site (cluster bootstrap)",
+  "top10pct_hit_rate": 0.333,
   "top25_hit_rate": 0.667,
   "top50_hit_rate": 0.833,
-  "auc_vs_all_controls": 0.888,
-  "auc_vs_hard_controls": 0.787,
-  "controls_median_percentile": 0.292,
-  "hard_controls_median_percentile": 0.598
+  "auc_vs_all_controls": 0.867,
+  "auc_vs_hard_controls": 0.775,
+  "controls_median_percentile": 0.307,
+  "hard_controls_median_percentile": 0.608
+ },
+ "heldout_v2": {
+  "n_pairs": 3,
+  "n_sites": 2,
+  "median_percentile": 0.755,
+  "median_ci95": null,
+  "median_ci95_unit": "site (cluster bootstrap)",
+  "top10pct_hit_rate": 0.0,
+  "top25_hit_rate": 0.667,
+  "top50_hit_rate": 1.0,
+  "auc_vs_all_controls": 0.795,
+  "auc_vs_hard_controls": 0.635,
+  "controls_median_percentile": 0.298,
+  "hard_controls_median_percentile": 0.623
  },
  "tuning": {
   "n_pairs": 5,
@@ -23,29 +46,147 @@
   "median_percentile": 0.816,
   "median_ci95": [
    0.466,
-   0.914
+   0.85
   ],
+  "median_ci95_unit": "site (cluster bootstrap)",
+  "top10pct_hit_rate": 0.2,
   "top25_hit_rate": 0.6,
   "top50_hit_rate": 0.8,
-  "auc_vs_all_controls": 0.886,
-  "auc_vs_hard_controls": 0.75,
-  "controls_median_percentile": 0.269,
-  "hard_controls_median_percentile": 0.495
+  "auc_vs_all_controls": 0.861,
+  "auc_vs_hard_controls": 0.737,
+  "controls_median_percentile": 0.286,
+  "hard_controls_median_percentile": 0.552
  },
  "all": {
-  "n_pairs": 11,
-  "n_sites": 8,
-  "median_percentile": 0.816,
+  "n_pairs": 14,
+  "n_sites": 10,
+  "median_percentile": 0.788,
   "median_ci95": [
    0.559,
-   0.914
+   0.861
   ],
-  "top25_hit_rate": 0.636,
-  "top50_hit_rate": 0.818,
-  "auc_vs_all_controls": 0.874,
-  "auc_vs_hard_controls": 0.753,
-  "controls_median_percentile": 0.292,
-  "hard_controls_median_percentile": 0.598
+  "median_ci95_unit": "site (cluster bootstrap)",
+  "top10pct_hit_rate": 0.214,
+  "top25_hit_rate": 0.643,
+  "top50_hit_rate": 0.857,
+  "auc_vs_all_controls": 0.842,
+  "auc_vs_hard_controls": 0.722,
+  "controls_median_percentile": 0.307,
+  "hard_controls_median_percentile": 0.608
+ },
+ "by_target": {
+  "MARS_CHLORIDE": {
+   "n_pairs": 2,
+   "n_sites": 2,
+   "median_percentile": 0.899,
+   "median_ci95": null,
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.5,
+   "top25_hit_rate": 1.0,
+   "top50_hit_rate": 1.0,
+   "auc_vs_all_controls": 0.942,
+   "auc_vs_hard_controls": 0.893,
+   "controls_median_percentile": 0.443,
+   "hard_controls_median_percentile": 0.669
+  },
+  "MARS_ICE": {
+   "n_pairs": 2,
+   "n_sites": 2,
+   "median_percentile": 0.738,
+   "median_ci95": null,
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.0,
+   "top25_hit_rate": 0.5,
+   "top50_hit_rate": 1.0,
+   "auc_vs_all_controls": 1.0,
+   "auc_vs_hard_controls": 1.0,
+   "controls_median_percentile": 0.284,
+   "hard_controls_median_percentile": 0.406
+  },
+  "MARS_JEZERO": {
+   "n_pairs": 5,
+   "n_sites": 5,
+   "median_percentile": 0.861,
+   "median_ci95": [
+    0.466,
+    0.983
+   ],
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.4,
+   "top25_hit_rate": 0.8,
+   "top50_hit_rate": 0.8,
+   "auc_vs_all_controls": 0.943,
+   "auc_vs_hard_controls": 0.9,
+   "controls_median_percentile": 0.262,
+   "hard_controls_median_percentile": 0.547
+  },
+  "MOON_LAVATUBE": {
+   "n_pairs": 3,
+   "n_sites": 3,
+   "median_percentile": 0.559,
+   "median_ci95": [
+    0.439,
+    0.755
+   ],
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.0,
+   "top25_hit_rate": 0.333,
+   "top50_hit_rate": 0.667,
+   "auc_vs_all_controls": 0.778,
+   "auc_vs_hard_controls": 0.556,
+   "controls_median_percentile": 0.145,
+   "hard_controls_median_percentile": 0.423
+  },
+  "MOON_MARE": {
+   "n_pairs": 2,
+   "n_sites": 2,
+   "median_percentile": 0.65,
+   "median_ci95": null,
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.0,
+   "top25_hit_rate": 0.5,
+   "top50_hit_rate": 1.0,
+   "auc_vs_all_controls": 0.654,
+   "auc_vs_hard_controls": 0.429,
+   "controls_median_percentile": 0.621,
+   "hard_controls_median_percentile": 0.664
+  }
+ },
+ "by_completeness": {
+  "coverage>=0.9": {
+   "n_pairs": 7,
+   "n_sites": 4,
+   "median_percentile": 0.861,
+   "median_ci95": [
+    0.816,
+    0.948
+   ],
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.429,
+   "top25_hit_rate": 1.0,
+   "top50_hit_rate": 1.0,
+   "auc_vs_all_controls": 0.96,
+   "auc_vs_hard_controls": 0.926,
+   "controls_median_percentile": 0.341,
+   "hard_controls_median_percentile": 0.62
+  },
+  "coverage<0.9": {
+   "n_pairs": 7,
+   "n_sites": 6,
+   "median_percentile": 0.559,
+   "median_ci95": [
+    0.466,
+    0.755
+   ],
+   "median_ci95_unit": "site (cluster bootstrap)",
+   "top10pct_hit_rate": 0.0,
+   "top25_hit_rate": 0.286,
+   "top50_hit_rate": 0.714,
+   "auc_vs_all_controls": 0.759,
+   "auc_vs_hard_controls": 0.582,
+   "controls_median_percentile": 0.292,
+   "hard_controls_median_percentile": 0.598
+  }
  },
  "diagnostics": [
   {
@@ -160,8 +301,50 @@
    "missing": {
     "D5_rock": "snow/ice-covered: the composition proxy only applies to bare ground"
    }
+  },
+  {
+   "site": "Craters of the Moon National Monument, Idaho, USA",
+   "target": "MOON_MARE",
+   "percentile": 0.54,
+   "coverage": 0.83,
+   "dims": [
+    {
+     "dimension": "D5_rock",
+     "similarity": null,
+     "weight": 2
+    },
+    {
+     "dimension": "D4_terrain",
+     "similarity": 0.101,
+     "weight": 3
+    },
+    {
+     "dimension": "D3_barren",
+     "similarity": 0.748,
+     "weight": 3
+    },
+    {
+     "dimension": "D2_aridity",
+     "similarity": 0.451,
+     "weight": 2
+    },
+    {
+     "dimension": "D8_thermal_swing",
+     "similarity": 0.845,
+     "weight": 2
+    }
+   ],
+   "missing": {
+    "D5_rock": "snow/ice-covered: the composition proxy only applies to bare ground"
+   }
   }
  ],
+ "cohorts": {
+  "v1": "sites scored and examined before this protocol existed (their results were visible during development, so they are not pristine held-out data)",
+  "v2_prospective": "sites added after the v1 diagnostics; first scored by this run and reported separately; never used for any rule change"
+ },
+ "n_controls": 15,
+ "n_control_pairs": 64,
  "temporal_coverage": [
   "2024-01",
   "2024-02",
@@ -183,6 +366,7 @@
  ],
  "rows": [
   {
+   "percentile_adj": 0.9855895197,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -199,6 +383,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.9480349345,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -215,6 +400,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8455604076,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -231,6 +417,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6395924309,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -247,6 +434,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8326055313,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -263,6 +451,7 @@
    "in_grid": false
   },
   {
+   "percentile_adj": 0.4676855895,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -279,6 +468,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8807860262,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -295,6 +485,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.9355167394,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -311,6 +502,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.827510917,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -327,6 +519,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.9145560408,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -343,6 +536,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6484716157,
    "kind": "positive",
    "ctype": "",
    "split": "heldout",
@@ -359,6 +553,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.4940320233,
    "kind": "positive",
    "ctype": "",
    "split": "tuning",
@@ -375,6 +570,58 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.542503639,
+   "kind": "positive",
+   "ctype": "",
+   "split": "heldout_v2",
+   "site_id": "craters_of_the_moon",
+   "site": "Craters of the Moon National Monument, Idaho, USA",
+   "target": "MOON_MARE",
+   "cell_id": 2266,
+   "cell_lat": 43.75,
+   "cell_lon": -113.75,
+   "dist_deg": 0.58,
+   "score": 51.41,
+   "percentile": 0.5400291121,
+   "coverage": 0.833,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.8004366812,
+   "kind": "positive",
+   "ctype": "",
+   "split": "heldout_v2",
+   "site_id": "craters_of_the_moon",
+   "site": "Craters of the Moon National Monument, Idaho, USA",
+   "target": "MOON_LAVATUBE",
+   "cell_id": 2266,
+   "cell_lat": 43.75,
+   "cell_lon": -113.75,
+   "dist_deg": 0.58,
+   "score": 67.14,
+   "percentile": 0.7551673945,
+   "coverage": 0.75,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.8665211063,
+   "kind": "positive",
+   "ctype": "",
+   "split": "heldout_v2",
+   "site_id": "mdrs_utah",
+   "site": "Mars Desert Research Station area (San Rafael Swell), Utah, USA",
+   "target": "MARS_JEZERO",
+   "cell_id": 2133,
+   "cell_lat": 38.75,
+   "cell_lon": -111.25,
+   "dist_deg": 0.5,
+   "score": 72.76,
+   "percentile": 0.8234352256,
+   "coverage": 0.846,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.1101892285,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -391,6 +638,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.1008733624,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -407,6 +655,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0027656477,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -423,6 +672,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0036390102,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -439,6 +689,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2678311499,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -455,6 +706,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0735080058,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -471,6 +723,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0554585153,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -487,6 +740,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0094614265,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -503,6 +757,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0088791849,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -519,6 +774,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.1844250364,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -535,6 +791,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.000727802,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -551,6 +808,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0004366812,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -567,6 +825,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0135371179,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -583,6 +842,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0138282387,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -599,6 +859,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.0013100437,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -615,6 +876,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.4344978166,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -631,6 +893,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.1944687045,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -647,6 +910,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.061426492,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -663,6 +927,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.1018922853,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -679,6 +944,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6362445415,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -695,6 +961,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.4320232897,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -711,6 +978,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2812227074,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -727,6 +995,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.3123726346,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -743,6 +1012,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.3633187773,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -759,6 +1029,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.5324599709,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -775,6 +1046,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2870451237,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -791,6 +1063,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2563318777,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -807,6 +1080,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.122852984,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -823,6 +1097,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.1114992722,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -839,6 +1114,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.4350800582,
    "kind": "control",
    "ctype": "easy",
    "split": "control",
@@ -855,6 +1131,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2203784571,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -871,6 +1148,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.3723435226,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -887,6 +1165,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2301310044,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -903,6 +1182,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.156768559,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -919,6 +1199,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2752547307,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -935,6 +1216,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.5570596798,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -951,6 +1233,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6269286754,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -967,6 +1250,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.291411936,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -983,6 +1267,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2398835517,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -999,6 +1284,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6861717613,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1015,6 +1301,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.761426492,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1031,6 +1318,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.4368267831,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1047,6 +1335,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8409024745,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1063,6 +1352,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8513828239,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1079,6 +1369,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.7713245997,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1095,6 +1386,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.9013100437,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1111,6 +1403,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2852983988,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1127,6 +1420,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.46069869,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1143,6 +1437,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.7844250364,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1159,6 +1454,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.9404657933,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1175,6 +1471,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6944687045,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1191,6 +1488,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.3033478894,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1207,6 +1505,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.842503639,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1223,6 +1522,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.8508005822,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1239,6 +1539,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6375545852,
    "kind": "control",
    "ctype": "hard",
    "split": "control",
@@ -1253,10 +1554,164 @@
    "percentile": 0.6218340611,
    "coverage": 0.833,
    "in_grid": true
+  },
+  {
+   "percentile_adj": 0.611062591,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "greenland_ice_sheet",
+   "site": "Greenland ice sheet",
+   "target": "MARS_JEZERO",
+   "cell_id": 3257,
+   "cell_lat": 71.25,
+   "cell_lon": -41.25,
+   "dist_deg": 0.85,
+   "score": 68.13,
+   "percentile": 0.6836972344,
+   "coverage": 0.615,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.5815138282,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "greenland_ice_sheet",
+   "site": "Greenland ice sheet",
+   "target": "MARS_CHLORIDE",
+   "cell_id": 3257,
+   "cell_lat": 71.25,
+   "cell_lon": -41.25,
+   "dist_deg": 0.85,
+   "score": 53.93,
+   "percentile": 0.5975254731,
+   "coverage": 0.7,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.6050946143,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "greenland_ice_sheet",
+   "site": "Greenland ice sheet",
+   "target": "MOON_MARE",
+   "cell_id": 3257,
+   "cell_lat": 71.25,
+   "cell_lon": -41.25,
+   "dist_deg": 0.85,
+   "score": 55.19,
+   "percentile": 0.6234352256,
+   "coverage": 0.583,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.7152838428,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "antarctic_plateau",
+   "site": "East Antarctic plateau",
+   "target": "MARS_JEZERO",
+   "cell_id": 513,
+   "cell_lat": -81.25,
+   "cell_lon": 98.75,
+   "dist_deg": 1.27,
+   "score": 71.51,
+   "percentile": 0.7919941776,
+   "coverage": 0.615,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.8068413392,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "antarctic_plateau",
+   "site": "East Antarctic plateau",
+   "target": "MARS_CHLORIDE",
+   "cell_id": 513,
+   "cell_lat": -81.25,
+   "cell_lon": 98.75,
+   "dist_deg": 1.27,
+   "score": 68.85,
+   "percentile": 0.850363901,
+   "coverage": 0.7,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.7689956332,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "antarctic_plateau",
+   "site": "East Antarctic plateau",
+   "target": "MOON_MARE",
+   "cell_id": 513,
+   "cell_lat": -81.25,
+   "cell_lon": 98.75,
+   "dist_deg": 1.27,
+   "score": 66.2,
+   "percentile": 0.8310043668,
+   "coverage": 0.583,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.5526928675,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "sahara_for_ice",
+   "site": "Central Sahara",
+   "target": "MARS_ICE",
+   "cell_id": 1794,
+   "cell_lat": 23.75,
+   "cell_lon": 13.75,
+   "dist_deg": 1.02,
+   "score": 52.41,
+   "percentile": 0.5515283843,
+   "coverage": 1.0,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.0429403202,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "amazon_highlands_for_terrain",
+   "site": "Guiana Highlands (rugged but humid, forested)",
+   "target": "MOON_LAVATUBE",
+   "cell_id": 1516,
+   "cell_lat": 6.25,
+   "cell_lon": -61.25,
+   "dist_deg": 1.27,
+   "score": 32.87,
+   "percentile": 0.04643377,
+   "coverage": 0.75,
+   "in_grid": true
+  },
+  {
+   "percentile_adj": 0.0292576419,
+   "kind": "control",
+   "ctype": "hard",
+   "split": "control",
+   "site_id": "amazon_highlands_for_terrain",
+   "site": "Guiana Highlands (rugged but humid, forested)",
+   "target": "MARS_JEZERO",
+   "cell_id": 1516,
+   "cell_lat": 6.25,
+   "cell_lon": -61.25,
+   "dist_deg": 1.27,
+   "score": 29.01,
+   "percentile": 0.0295487627,
+   "coverage": 0.846,
+   "in_grid": true
   }
  ],
  "hypotheses": [
   {
+   "percentile_adj": 0.6040756914,
    "kind": "hypothesis",
    "ctype": "",
    "split": "n/a",
@@ -1273,6 +1728,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.3310043668,
    "kind": "hypothesis",
    "ctype": "",
    "split": "n/a",
@@ -1289,6 +1745,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.2075691412,
    "kind": "hypothesis",
    "ctype": "",
    "split": "n/a",
@@ -1305,6 +1762,7 @@
    "in_grid": true
   },
   {
+   "percentile_adj": 0.6040756914,
    "kind": "hypothesis",
    "ctype": "",
    "split": "n/a",

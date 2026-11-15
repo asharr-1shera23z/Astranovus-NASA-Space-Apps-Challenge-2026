@@ -93,3 +93,15 @@ def test_missing_dimension_never_penalises_score():
     t = {"rules": {"D1_cold": {"rule": "high", "weight": 1}, "D3_barren": {"rule": "high", "weight": 1}}}
     s = score_grid(g, t).set_index("cell_id")
     assert s.score[1] == s.score[2] == 80.0 and s.coverage[1] == 0.5 and s.coverage[2] == 1.0
+
+
+def test_adjusted_score_penalises_missing_evidence_and_changes_ranking():
+    # same raw similarity, but cell 2 has half its weight unobserved: adjusted score must rank it below cell 1
+    g = grid({"cell_id": [1, 2], "lat": [0.0, 40.0], "lon": [0.0, 0.0], "D1_cold": [0.9, 0.9], "D2_aridity": [0.9, np.nan]})
+    t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}, "D2_aridity": {"rule": "high", "weight": 1}}}
+    s = score_grid(g, t).set_index("cell_id")
+    assert s.score[1] == s.score[2] == 90.0
+    assert s.score_adj[1] == 90.0 and s.score_adj[2] == 70.0           # 0.5*90 + 0.5*50
+    out = recommend(g, t, {}, [{"id": "D1_cold", "earth_source": "x"}, {"id": "D2_aridity", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0, rank_by="adjusted")
+    assert out["regions"][0]["best_cell"]["lat"] == 0.0 and out["ranking_basis"] == "evidence-adjusted score"
+    assert out["regions"][0]["evidence_adjusted_score"] >= out["regions"][1]["evidence_adjusted_score"]

@@ -1,6 +1,6 @@
 import { ArrowRight, ArrowLeftRight, Database, FlaskConical, Layers } from 'lucide-react';
 import type { MissionResult, Region } from '../types/astranovus';
-import { BODY_ACCENT, bodyLabel, pct, suitabilitySummary } from '../utils/mission';
+import { BODY_ACCENT, bodyLabel, pct, rankScore, suitabilitySummary } from '../utils/mission';
 import { DimensionTable } from './DimensionTable';
 import { EarthLimitsNote } from './DataBanners';
 import { ScoreDonut } from './ScoreDonut';
@@ -58,9 +58,9 @@ export function RegionDetail({ region: r, result, inCompare, onToggleCompare, on
           </div>
         </div>
         <div className="md:col-span-4 flex flex-col items-center">
-          <ScoreDonut score={r.best_score} accentColor={accent} label={`${r.confidence} confidence`} />
+          <ScoreDonut score={rankScore(r)} accentColor={accent} label={`${r.confidence} confidence`} />
           <div className="text-[11px] text-[#68788F] text-center mt-1">
-            Data coverage {pct(r.coverage)} · mean of region {r.mean_score.toFixed(1)}
+            Evidence-adjusted score (raw similarity {r.best_score.toFixed(1)}, data coverage {pct(r.coverage)})
           </div>
         </div>
       </div>

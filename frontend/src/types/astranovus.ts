@@ -163,6 +163,7 @@ export interface Region {
   centroid?: { lat: number; lon: number };
   n_cells: number;
   best_score: number;
+  evidence_adjusted_score?: number;
   mean_score: number;
   coverage: number;
   confidence: Confidence;
@@ -210,6 +211,7 @@ export interface MissionResult {
   disclaimer: string;
   regions: Region[];
   n_cells_passed: number;
+  ranking_basis?: string;
   n_cells_excluded_unverified?: number;
   weights_used: Record<string, number>;
 }

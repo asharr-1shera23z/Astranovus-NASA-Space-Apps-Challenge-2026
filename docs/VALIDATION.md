@@ -8,7 +8,8 @@
 - Proxy dimensions: D5_rock, D6_ice. D5 (composition proxy) exists only for bare-ground cells (13% of cells).
 - MODIS/GPM time span: calendar year 2024, all 12 monthly granules (a single year, not a multi-year climatology).
 - Each site is scored at its nearest grid cell with generic target weights (no mission profile, no gates). Cells are 2.5 degrees (~280 km): they cannot represent a single site.
-- Metric: percentile of the cell's score among all scored cells for the mapped target; AUC against easy and hard controls for the same targets; 95% bootstrap intervals (seeded).
+- Metric: percentile of the cell's score among all scored cells for the mapped target; AUC against easy and hard controls for the same targets (hard controls are scoped to the targets they are meant to be negatives for); 95% cluster-bootstrap intervals (resampling SITES, seeded); top-25% and top-10% hit rates.
+- **Leakage disclosure:** the v1 held-out sites were visible in earlier diagnostics during development, so they are not pristine. Cohort v2 sites were added afterwards and scored for the first time by this run; they are reported separately and were never used for any rule change. Even so, the sample is tiny.
 - No rule or weight was tuned on these sites. Positives are split by a hash of their id into `tuning` and `heldout`; the headline uses `heldout`.
 - The target mapping (which Moon/Mars reference a site should resemble) is an ASTRANOVUS judgement; control sites are poor analogs by construction (no citation).
 
@@ -16,9 +17,19 @@
 
 | subset | sites | pairs | median percentile (95% CI) | top-25% hits | AUC vs all controls | AUC vs hard controls | controls median | hard controls median |
 |---|---|---|---|---|---|---|---|---|
-| **held-out (headline)** | 4 | 6 | 0.811 [0.55, 0.966] | 0.667 | 0.888 | 0.787 | 0.292 | 0.598 |
-| tuning | 4 | 5 | 0.816 [0.466, 0.914] | 0.6 | 0.886 | 0.75 | 0.269 | 0.495 |
-| all positives | 8 | 11 | 0.816 [0.559, 0.914] | 0.636 | 0.874 | 0.753 | 0.292 | 0.598 |
+| **held-out v1** | 4 | 6 | 0.811 [0.439, 0.948] | 0.667 | 0.867 | 0.775 | 0.307 | 0.608 |
+| **prospective v2 (scored once)** | 2 | 3 | 0.755  | 0.667 | 0.795 | 0.635 | 0.298 | 0.623 |
+| tuning | 4 | 5 | 0.816 [0.466, 0.85] | 0.6 | 0.861 | 0.737 | 0.286 | 0.552 |
+| all positives | 10 | 14 | 0.788 [0.559, 0.861] | 0.643 | 0.842 | 0.722 | 0.307 | 0.608 |
+| target MARS_CHLORIDE | 2 | 2 | 0.899  | 1.0 | 0.942 | 0.893 | 0.443 | 0.669 |
+| target MARS_ICE | 2 | 2 | 0.738  | 0.5 | 1.0 | 1.0 | 0.284 | 0.406 |
+| target MARS_JEZERO | 5 | 5 | 0.861 [0.466, 0.983] | 0.8 | 0.943 | 0.9 | 0.262 | 0.547 |
+| target MOON_LAVATUBE | 3 | 3 | 0.559 [0.439, 0.755] | 0.333 | 0.778 | 0.556 | 0.145 | 0.423 |
+| target MOON_MARE | 2 | 2 | 0.65  | 0.5 | 0.654 | 0.429 | 0.621 | 0.664 |
+| data coverage>=0.9 | 4 | 7 | 0.861 [0.816, 0.948] | 1.0 | 0.96 | 0.926 | 0.341 | 0.62 |
+| data coverage<0.9 | 6 | 7 | 0.559 [0.466, 0.755] | 0.286 | 0.759 | 0.582 | 0.292 | 0.598 |
+
+Ranked by the evidence-adjusted score instead of the raw similarity: median percentile 0.788 -> 0.837, mean AUC vs hard controls by target 0.755 -> 0.777. The adjusted score was adopted because of a documented coverage bias (score vs coverage rank correlation down to -0.7 for polar targets), not because of these numbers.
 
 With so few sites the intervals are wide: treat these as indicative, not as proof of accuracy.
 
@@ -61,6 +72,15 @@ With so few sites the intervals are wide: treat these as indicative, not as proo
 | control (hard) | control | Canadian boreal forest | MARS_JEZERO | 56.25,-101.25 | 1.44 | 50.3 | 0.85 | 0.29 |
 | control (hard) | control | Canadian boreal forest | MOON_LAVATUBE | 56.25,-101.25 | 1.44 | 46.5 | 0.75 | 0.25 |
 | control (hard) | control | Canadian boreal forest | MOON_MARE | 56.25,-101.25 | 1.44 | 57.4 | 0.83 | 0.66 |
+| control (hard) | control | Central Sahara | MARS_ICE | 23.75,13.75 | 1.02 | 52.4 | 1.00 | 0.55 |
+| control (hard) | control | East Antarctic plateau | MARS_CHLORIDE | -81.25,98.75 | 1.27 | 68.8 | 0.70 | 0.85 |
+| control (hard) | control | East Antarctic plateau | MARS_JEZERO | -81.25,98.75 | 1.27 | 71.5 | 0.61 | 0.79 |
+| control (hard) | control | East Antarctic plateau | MOON_MARE | -81.25,98.75 | 1.27 | 66.2 | 0.58 | 0.83 |
+| control (hard) | control | Greenland ice sheet | MARS_CHLORIDE | 71.25,-41.25 | 0.85 | 53.9 | 0.70 | 0.60 |
+| control (hard) | control | Greenland ice sheet | MARS_JEZERO | 71.25,-41.25 | 0.85 | 68.1 | 0.61 | 0.68 |
+| control (hard) | control | Greenland ice sheet | MOON_MARE | 71.25,-41.25 | 0.85 | 55.2 | 0.58 | 0.62 |
+| control (hard) | control | Guiana Highlands (rugged but humid, forested) | MARS_JEZERO | 6.25,-61.25 | 1.27 | 29.0 | 0.85 | 0.03 |
+| control (hard) | control | Guiana Highlands (rugged but humid, forested) | MOON_LAVATUBE | 6.25,-61.25 | 1.27 | 32.9 | 0.75 | 0.05 |
 | control (hard) | control | Mediterranean scrub (Spain) | MARS_CHLORIDE | 38.75,-3.75 | 0.32 | 57.4 | 1.00 | 0.67 |
 | control (hard) | control | Mediterranean scrub (Spain) | MARS_ICE | 38.75,-3.75 | 0.32 | 42.5 | 1.00 | 0.31 |
 | control (hard) | control | Mediterranean scrub (Spain) | MARS_JEZERO | 38.75,-3.75 | 0.32 | 70.4 | 0.85 | 0.76 |
@@ -89,12 +109,15 @@ With so few sites the intervals are wide: treat these as indicative, not as proo
 | positive | heldout | Atacama Desert, Chile | MARS_JEZERO | -23.75,-68.75 | 0.73 | 81.9 | 1.00 | 0.98 |
 | positive | heldout | Colorado Desert, California, USA | MARS_JEZERO | 33.75,-116.25 | 0.84 | 74.1 | 1.00 | 0.86 |
 | positive | heldout | Colorado Desert, California, USA | MOON_MARE | 33.75,-116.25 | 0.84 | 62.1 | 1.00 | 0.76 |
+| positive | heldout_v2 | Craters of the Moon National Monument, Idaho, USA | MOON_LAVATUBE | 43.75,-113.75 | 0.58 | 67.1 | 0.75 | 0.76 |
+| positive | heldout_v2 | Craters of the Moon National Monument, Idaho, USA | MOON_MARE | 43.75,-113.75 | 0.58 | 51.4 | 0.83 | 0.54 |
 | positive | tuning | Death Valley, USA | MARS_CHLORIDE | 36.25,-116.25 | 0.73 | 68.8 | 1.00 | 0.85 |
 | positive | tuning | Death Valley, USA | MARS_JEZERO | 36.25,-116.25 | 0.73 | 76.5 | 1.00 | 0.91 |
 | positive | tuning | Devon Island / Haughton crater, Canada | MARS_ICE | 76.25,-91.25 | 0.92 | 68.2 | 1.00 | 0.82 |
 | positive | heldout | Icelandic volcanic fields | MOON_LAVATUBE | 63.75,-18.75 | 1.27 | 55.8 | 0.75 | 0.44 |
 | positive | tuning | Kilauea volcano, Hawaii, USA | MOON_LAVATUBE | 36.25,-121.25 | 34.24 | 70.3 | 0.75 | 0.83 |
 | positive | tuning | Lava Beds National Monument, USA | MOON_LAVATUBE | 41.25,-121.25 | 0.49 | 60.4 | 0.75 | 0.56 |
+| positive | heldout_v2 | Mars Desert Research Station area (San Rafael Swell), Utah, USA | MARS_JEZERO | 38.75,-111.25 | 0.5 | 72.8 | 0.85 | 0.82 |
 | positive | heldout | McMurdo Dry Valleys, Antarctica | MARS_ICE | -78.75,161.25 | 1.28 | 58.3 | 0.85 | 0.66 |
 | positive | tuning | Svalbard, Norway (AMASE) | MARS_JEZERO | 78.75,16.25 | 0.57 | 59.7 | 0.85 | 0.47 |
 
@@ -103,6 +126,7 @@ With so few sites the intervals are wide: treat these as indicative, not as proo
 - **Lava Beds National Monument, USA -> MOON_LAVATUBE** (percentile 0.56, coverage 0.75): low dimensions: D2_aridity 0.31; missing: D5_rock (snow/ice-covered: the composition proxy only applies to bare ground).
 - **Icelandic volcanic fields -> MOON_LAVATUBE** (percentile 0.44, coverage 0.75): low dimensions: D2_aridity 0.02; missing: D5_rock (snow/ice-covered: the composition proxy only applies to bare ground).
 - **Svalbard, Norway (AMASE) -> MARS_JEZERO** (percentile 0.47, coverage 0.85): low dimensions: D2_aridity 0.30, D8_thermal_swing 0.21; missing: D5_rock (snow/ice-covered: the composition proxy only applies to bare ground).
+- **Craters of the Moon National Monument, Idaho, USA -> MOON_MARE** (percentile 0.54, coverage 0.83): low dimensions: D4_terrain 0.10, D2_aridity 0.45; missing: D5_rock (snow/ice-covered: the composition proxy only applies to bare ground).
 
 Common causes: (1) a 2.5 degree cell averages the site with its surroundings (ocean, forest, ice cap); (2) volcanic and lava-tube analogs are defined by composition and structure that the bare-ground-only D5 proxy and 1 km terrain barely capture; (3) vegetated or glaciated cells have D3/D5 undefined by design. These are limits of the data, not reasons to adjust weights.
 

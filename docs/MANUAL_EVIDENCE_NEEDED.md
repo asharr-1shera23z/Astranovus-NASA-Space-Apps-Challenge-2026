@@ -19,3 +19,17 @@ adding the entry to its table.
 | MARS_AEOLIAN | MOLA slope over a major dune field | quantifies "low relief" (D4) | Mars Trek MOLA slope over the dune polygon |
 
 Weights and band limits stay unchanged until real values exist.
+
+## Update after the planetary-measurement round
+
+Retrieved and recorded since the table above (see `data/planetary_measurements.csv`): Shackleton floor temperature, size and shadow state; south-pole ridge illumination figures; lunar pit dimensions (with source conflict); Arcadia ice volume, thickness and depth ranges; Jezero crater size and sampled temperatures; HiRISE image scale for the mud-volcano field. Those rows are no longer manual tasks.
+
+Genuinely manual (cannot be read from a static page by this project, and are not to be typed from memory):
+
+1. **Re-verify the 12 `search_summary` rows** (column `retrieval`): open `source_url`, confirm the value and units, change `retrieval` to `primary_fetched` in `scripts/build_planetary_measurements.py` and rerun it. Priority: J01 (Jezero reference point; the JPL MarsNext listing failed a certificate check), M09-M12 (lunar pit values conflict between sources), M15-M16 (mare slope and temperature), C01 (chloride count).
+2. **Interactive Trek/PDS values** listed in the table above (LOLA slopes, Diviner annual statistics, MOLA slopes, SWIM score, mound counts). Each needs a person to pick coordinates in Moon/Mars Trek, record layer name, coordinates and a screenshot or permalink.
+3. **Coordinates** for the south-pole ridge, mud-volcano fields and THEMIS chloride deposits (needed before any stage-2 terrain check can be run for those targets).
+4. **Independent analog sites** for a second, untouched validation cohort, and a literature check of any Pakistani analog claim (Karakoram/Baltoro, Hingol, Khewra, Katpana) before it is counted as a positive.
+5. **Official Space Apps deadline and submission rules**: the official page could not be fetched (certificate error); confirm by hand.
+
+Weights, band limits and rules remain unchanged until real values exist.

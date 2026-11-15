@@ -9,6 +9,9 @@ import type {
   RegionDimension,
 } from '../types/astranovus';
 
+/** Score used for ranking: evidence-adjusted (missing dimensions count as chance-level) when the API provides it. */
+export const rankScore = (r: Region): number => r.evidence_adjusted_score ?? r.best_score;
+
 export const bodyLabel = (b: Body): BodyLabel => (b === 'mars' ? 'Mars' : 'Moon');
 
 export const BODY_ACCENT: Record<Body, string> = { moon: '#0B5ED7', mars: '#F28B45' };
@@ -80,7 +83,7 @@ export function regionsToMapSites(regions: Region[]): MapSite[] {
     lon: r.lon,
     role: 'recommended region',
     classification: r.label_basis,
-    overall_score: r.best_score,
+    overall_score: rankScore(r),
     data_coverage: r.coverage * 100,
   }));
 }
@@ -107,9 +110,9 @@ export function buildRegionsCsv(regions: Region[]): string {
     const s = String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const head = ['Rank', 'Location', 'Lat', 'Lon', 'Score (0-100)', 'Coverage', 'Confidence', 'Cells', 'Missing dimensions'];
+  const head = ['Rank', 'Location', 'Lat', 'Lon', 'Evidence-adjusted score (0-100)', 'Raw similarity (0-100)', 'Coverage', 'Confidence', 'Cells', 'Missing dimensions'];
   const rows = regions.map((r) =>
-    [r.rank, r.location_label, r.lat, r.lon, r.best_score, r.coverage, r.confidence, r.n_cells, r.missing_data.join('; ')]
+    [r.rank, r.location_label, r.lat, r.lon, rankScore(r), r.best_score, r.coverage, r.confidence, r.n_cells, r.missing_data.join('; ')]
       .map(esc)
       .join(',')
   );

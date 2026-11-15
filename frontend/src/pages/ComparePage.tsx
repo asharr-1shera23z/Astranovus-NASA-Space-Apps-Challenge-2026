@@ -3,16 +3,16 @@ import type { PageId } from '../components/Navbar';
 import { InfoNote } from '../components/StatusViews';
 import { useMission } from '../state/MissionContext';
 import type { Region } from '../types/astranovus';
-import { BODY_ACCENT, bodyLabel, pct } from '../utils/mission';
+import { BODY_ACCENT, bodyLabel, pct, rankScore } from '../utils/mission';
 
 const SERIES_COLORS = ['#0B5ED7', '#F28B45', '#16A34A'];
 
 function tradeOff(regions: Region[]): string[] {
   if (regions.length < 2) return [];
   const lines: string[] = [];
-  const top = [...regions].sort((a, b) => b.best_score - a.best_score);
-  if (top[0].best_score - top[1].best_score >= 0.5) {
-    lines.push(`${top[0].location_label} has the higher similarity score (${top[0].best_score.toFixed(1)} vs ${top[1].best_score.toFixed(1)}).`);
+  const top = [...regions].sort((a, b) => rankScore(b) - rankScore(a));
+  if (rankScore(top[0]) - rankScore(top[1]) >= 0.5) {
+    lines.push(`${top[0].location_label} has the higher evidence-adjusted score (${rankScore(top[0]).toFixed(1)} vs ${rankScore(top[1]).toFixed(1)}).`);
   } else {
     lines.push('Scores are within 0.5 points of each other, which is below the precision these estimates support.');
   }
@@ -114,7 +114,8 @@ export function ComparePage({ onNavigate }: { onNavigate: (p: PageId) => void })
               </thead>
               <tbody className="divide-y divide-[#E6ECF3]">
                 {[
-                  ['Similarity score (0-100)', (r: Region) => r.best_score.toFixed(1)],
+                  ['Evidence-adjusted score (0-100)', (r: Region) => rankScore(r).toFixed(1)],
+                  ['Raw similarity (0-100)', (r: Region) => r.best_score.toFixed(1)],
                   ['Data coverage', (r: Region) => pct(r.coverage)],
                   ['Confidence', (r: Region) => r.confidence],
                   ['Cells in region', (r: Region) => String(r.n_cells)],

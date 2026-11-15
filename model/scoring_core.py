@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+NEUTRAL_SCORE = 50.0   # chance-level similarity used for missing evidence in the adjusted score
 DIMS = ["D1_cold", "D2_aridity", "D3_barren", "D4_terrain",
         "D5_rock", "D6_ice", "D7_polar_light", "D8_thermal_swing"]
 
@@ -42,6 +43,11 @@ def score_grid(grid: pd.DataFrame, target: dict) -> pd.DataFrame:
     out = grid[["cell_id", "lat", "lon"]].copy()
     out["score"] = np.round(score, 2)
     out["coverage"] = np.round(cov, 3)
+    # Evidence-adjusted score: a dimension without data carries no evidence, so it is treated as chance-level (50) in
+    # proportion to the weight that is missing. This stops cells with MISSING dimensions from out-ranking cells that were
+    # actually checked on more criteria (documented coverage bias in docs/SCIENTIFIC_VALIDATION_REPORT.md).
+    with np.errstate(invalid="ignore"):
+        out["score_adj"] = np.round(np.where(np.isnan(score), np.nan, cov * score + (1.0 - cov) * NEUTRAL_SCORE), 2)
     return out
 
 

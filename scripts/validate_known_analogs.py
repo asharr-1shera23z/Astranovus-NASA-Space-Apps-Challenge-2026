@@ -52,11 +52,23 @@ def auc(pos, neg):
     return float(np.mean([(p > n) + 0.5 * (p == n) for p in pos for n in neg]))
 
 
-def boot_ci(vals, fn, n=2000):
+def boot_ci(vals, fn, n=2000, groups=None):
+    """Percentile bootstrap. With `groups` the resampling unit is the SITE (pairs of one site move together), which
+    respects the dependence between targets scored at the same location."""
     vals = np.asarray(vals, dtype=float)
     if len(vals) < 3:
         return None
-    stats = [fn(RNG.choice(vals, len(vals), replace=True)) for _ in range(n)]
+    if groups is None:
+        stats = [fn(RNG.choice(vals, len(vals), replace=True)) for _ in range(n)]
+    else:
+        groups = np.asarray(groups)
+        uniq = np.unique(groups)
+        if len(uniq) < 3:
+            return None
+        stats = []
+        for _ in range(n):
+            pick = RNG.choice(uniq, len(uniq), replace=True)
+            stats.append(fn(np.concatenate([vals[groups == g] for g in pick])))
     return [round(float(np.percentile(stats, 2.5)), 3), round(float(np.percentile(stats, 97.5)), 3)]
 
 
@@ -78,13 +90,21 @@ def main():
         v = s.loc[cell_id, "score"]
         return float((s.score < v).mean() + 0.5 * (s.score == v).mean()), float(v), float(s.loc[cell_id, "coverage"])
 
-    split = {p["id"]: ("heldout" if int(hashlib.sha256(p["id"].encode()).hexdigest(), 16) % 2 == 0 else "tuning") for p in ka["positives"]}
+    def pct_rank_adj(tid, cell_id):
+        s = scored[tid]
+        if cell_id not in s.index:
+            return None
+        v = s.loc[cell_id, "score_adj"]
+        return float((s.score_adj < v).mean() + 0.5 * (s.score_adj == v).mean())
+
+    split = {p["id"]: ("heldout_v2" if p.get("cohort") == "v2_prospective" else ("heldout" if int(hashlib.sha256(p["id"].encode()).hexdigest(), 16) % 2 == 0 else "tuning")) for p in ka["positives"]}
     rows = []
 
     def add(kind, ctype, sp, name, sid, tid, lat, lon):
         cell, dist = nearest(grid, lat, lon)
         r, v, cov = pct_rank(tid, int(cell.cell_id))
-        rows.append({"kind": kind, "ctype": ctype, "split": sp, "site_id": sid, "site": name, "target": tid, "cell_id": int(cell.cell_id),
+        radj = pct_rank_adj(tid, int(cell.cell_id))
+        rows.append({"percentile_adj": radj, "kind": kind, "ctype": ctype, "split": sp, "site_id": sid, "site": name, "target": tid, "cell_id": int(cell.cell_id),
                      "cell_lat": cell.lat, "cell_lon": cell.lon, "dist_deg": round(dist, 2), "score": v, "percentile": r,
                      "coverage": cov, "in_grid": dist <= MAX_DIST_DEG})
 
@@ -93,7 +113,7 @@ def main():
             add("positive", "", split[p["id"]], p["name"], p["id"], tid, p["lat"], p["lon"])
     tids = sorted({t for p in ka["positives"] for t in p["targets"]})
     for c in ka["controls"]:
-        for tid in tids:
+        for tid in c.get("targets", tids):
             add("control", "hard" if c.get("hard") else "easy", "control", c["name"], c["id"], tid, c["lat"], c["lon"])
     for h in ka["hypotheses_pakistan"]["sites"]:
         for tid in h["targets"]:
@@ -112,7 +132,8 @@ def main():
         pv = sub.percentile.to_numpy()
         a_all, a_hard = auc(pv, c.percentile.to_numpy()), auc(pv, ch.percentile.to_numpy())
         return {"n_pairs": int(len(sub)), "n_sites": int(sub.site_id.nunique()),
-                "median_percentile": round(float(np.median(pv)), 3), "median_ci95": boot_ci(pv, np.median),
+                "median_percentile": round(float(np.median(pv)), 3), "median_ci95": boot_ci(pv, np.median, groups=sub.site_id.to_numpy()),
+                "median_ci95_unit": "site (cluster bootstrap)", "top10pct_hit_rate": round(float((pv >= 0.9).mean()), 3),
                 "top25_hit_rate": round(float((pv >= 0.75).mean()), 3), "top50_hit_rate": round(float((pv >= 0.5).mean()), 3),
                 "auc_vs_all_controls": None if a_all is None else round(a_all, 3),
                 "auc_vs_hard_controls": None if a_hard is None else round(a_hard, 3),
@@ -120,6 +141,9 @@ def main():
                 "hard_controls_median_percentile": round(float(ch.percentile.median()), 3) if len(ch) else None}
 
     held, tune, allp = stats(pos[pos.split == "heldout"]), stats(pos[pos.split == "tuning"]), stats(pos)
+    heldv2 = stats(pos[pos.split == "heldout_v2"])
+    by_target = {t: stats(pos[pos.target == t]) for t in sorted(pos.target.unique())}
+    by_complete = {"coverage>=0.9": stats(pos[pos.coverage >= 0.9]), "coverage<0.9": stats(pos[pos.coverage < 0.9])}
 
     diag = []
     for r in pos[pos.percentile < 0.6].itertuples():
@@ -130,8 +154,19 @@ def main():
         miss = {d["dimension"]: (fr.get(f"{d['dimension'].split('_')[0]}_missing_reason") or "") for d in dims if d["similarity"] is None}
         diag.append({"site": r.site, "target": r.target, "percentile": round(r.percentile, 2), "coverage": round(r.coverage, 2), "dims": dims, "missing": miss})
 
-    summary = {"grid_built_utc": meta["built_utc"], "grid_cells": meta["grid"]["cells"], "grid_step_deg": meta["grid"]["step_deg"],
-               "heldout": held, "tuning": tune, "all": allp, "diagnostics": diag,
+    # same evaluation when sites are ranked by the evidence-adjusted score used by the API (reported, not used to choose it)
+    okp = ok.copy()
+    posa = okp[okp.kind == "positive"]
+    hardc = okp[(okp.kind == "control") & (okp.ctype == "hard")]
+    aucs_adj = [auc(posa[posa.target == t].percentile_adj.dropna().to_numpy(), hardc[hardc.target == t].percentile_adj.dropna().to_numpy()) for t in posa.target.unique()]
+    aucs_raw = [auc(posa[posa.target == t].percentile.dropna().to_numpy(), hardc[hardc.target == t].percentile.dropna().to_numpy()) for t in posa.target.unique()]
+    adjusted_basis = {"median_percentile_raw": round(float(posa.percentile.median()), 3), "median_percentile_adjusted": round(float(posa.percentile_adj.median()), 3),
+                      "mean_auc_hard_by_target_raw": round(float(np.nanmean([a for a in aucs_raw if a is not None])), 3),
+                      "mean_auc_hard_by_target_adjusted": round(float(np.nanmean([a for a in aucs_adj if a is not None])), 3),
+                      "note": "The adjusted score was adopted because of a documented coverage bias (score vs coverage rank correlation down to -0.7 for polar targets), not because of these numbers."}
+    summary = {"adjusted_basis": adjusted_basis, "grid_built_utc": meta["built_utc"], "grid_cells": meta["grid"]["cells"], "grid_step_deg": meta["grid"]["step_deg"],
+               "heldout": held, "heldout_v2": heldv2, "tuning": tune, "all": allp, "by_target": by_target, "by_completeness": by_complete, "diagnostics": diag,
+               "cohorts": ka["_meta"].get("cohorts"), "n_controls": int(ctrl.site_id.nunique()), "n_control_pairs": int(len(ctrl)),
                "temporal_coverage": meta["temporal_coverage"]["MODIS_GPM_months"],
                "dimensions_missing": [d for d, v in meta["coverage_by_dimension"].items() if v == 0],
                "dimensions_proxy": [d for d, v in meta["dimensions"].items() if v["status"] == "proxy"],
@@ -147,15 +182,17 @@ def main():
          f"- Proxy dimensions: {', '.join(summary['dimensions_proxy'])}. D5 (composition proxy) exists only for bare-ground cells ({meta['coverage_by_dimension']['D5_rock']:.0%} of cells).",
          f"- MODIS/GPM time span: {meta['temporal_coverage']['span']}.",
          "- Each site is scored at its nearest grid cell with generic target weights (no mission profile, no gates). Cells are 2.5 degrees (~280 km): they cannot represent a single site.",
-         "- Metric: percentile of the cell's score among all scored cells for the mapped target; AUC against easy and hard controls for the same targets; 95% bootstrap intervals (seeded).",
+         "- Metric: percentile of the cell's score among all scored cells for the mapped target; AUC against easy and hard controls for the same targets (hard controls are scoped to the targets they are meant to be negatives for); 95% cluster-bootstrap intervals (resampling SITES, seeded); top-25% and top-10% hit rates.",
+         "- **Leakage disclosure:** the v1 held-out sites were visible in earlier diagnostics during development, so they are not pristine. Cohort v2 sites were added afterwards and scored for the first time by this run; they are reported separately and were never used for any rule change. Even so, the sample is tiny.",
          "- No rule or weight was tuned on these sites. Positives are split by a hash of their id into `tuning` and `heldout`; the headline uses `heldout`.",
          "- The target mapping (which Moon/Mars reference a site should resemble) is an ASTRANOVUS judgement; control sites are poor analogs by construction (no citation).\n",
          "## Summary\n",
          "| subset | sites | pairs | median percentile (95% CI) | top-25% hits | AUC vs all controls | AUC vs hard controls | controls median | hard controls median |",
          "|---|---|---|---|---|---|---|---|---|"]
-    for nm, s in [("**held-out (headline)**", held), ("tuning", tune), ("all positives", allp)]:
+    for nm, s in [("**held-out v1**", held), ("**prospective v2 (scored once)**", heldv2), ("tuning", tune), ("all positives", allp)] + [(f"target {t}", v) for t, v in by_target.items()] + [(f"data {k}", v) for k, v in by_complete.items()]:
         if s:
             L.append(f"| {nm} | {s['n_sites']} | {s['n_pairs']} | {s['median_percentile']} {s['median_ci95'] or ''} | {s['top25_hit_rate']} | {s['auc_vs_all_controls']} | {s['auc_vs_hard_controls']} | {s['controls_median_percentile']} | {s['hard_controls_median_percentile']} |")
+    L.append(f"\nRanked by the evidence-adjusted score instead of the raw similarity: median percentile {adjusted_basis['median_percentile_raw']} -> {adjusted_basis['median_percentile_adjusted']}, mean AUC vs hard controls by target {adjusted_basis['mean_auc_hard_by_target_raw']} -> {adjusted_basis['mean_auc_hard_by_target_adjusted']}. {adjusted_basis['note']}")
     L.append("\nWith so few sites the intervals are wide: treat these as indicative, not as proof of accuracy.\n")
     L.append("## Per-site results\n")
     L.append("| kind | split | site | target | nearest cell | dist (deg) | score | coverage | percentile |")

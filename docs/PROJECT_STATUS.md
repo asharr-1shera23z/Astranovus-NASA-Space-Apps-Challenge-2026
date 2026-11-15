@@ -20,7 +20,7 @@ Distinctions kept apart: snow cover (D6), perennial snow/ice flag (features file
 Terrain: coarse global relief (D4, 1 km, whole cell) is shown separately from the 30 m SRTM check, which exists only for the top candidate regions (`data/processed/stage2.json`); regions outside SRTM coverage are marked "not verified".
 
 ## Moon/Mars reference profiles
-49 evidence rows: 32 `supported` by retrieved sources (including generic NASA Moon/Mars fact-page properties, flagged as not site-specific), 4 rules retired (weight 0) with written reasons, 13 unverified.
+49 evidence rows (qualitative rule support): 32 `supported` by retrieved sources (including generic NASA Moon/Mars fact-page properties, flagged as not site-specific), 4 rules retired (weight 0) with written reasons, 13 unverified.
 Four evidence-backed profile changes this round: MOON_PSR D7, MOON_SP_RIDGE D5, MARS_MUDVOLC D5, MARS_AEOLIAN D5 set to 0 (`_reason` fields in `data/targets.json`; the previous file is archived under `data/processed/archive/`). No weight was changed to improve validation results.
 Numbers that still need manual Moon Trek / Mars Trek retrieval: `docs/MANUAL_EVIDENCE_NEEDED.md`.
 
@@ -30,11 +30,20 @@ Numbers that still need manual Moon Trek / Mars Trek retrieval: `docs/MANUAL_EVI
 ## Geography
 Region markers are real grid cells. Names combine a country (Natural Earth 110m boundaries) with an approximate region box; coordinates are always shown; the map draws the selected 2.5 degree cell footprint. Regions group cells within 15 degrees of their best cell. Great-circle distances handle the date line and poles.
 
-## Validation (`docs/VALIDATION.md`)
-Held-out: 4 sites / 6 pairs, median percentile 0.811 (95% interval 0.55-0.966), AUC 0.888 vs all controls and 0.787 vs hard controls (cold forest, dry vegetated land). Small sample, wide intervals; weak analogs are diagnosed in the report.
+## Planetary evidence (`docs/PLANETARY_EVIDENCE_REPORT.md`)
+29 numeric, provenance-complete measurements for 8 of 9 targets in `data/planetary_measurements.csv` (observed 8, derived 14, inferred 7; 17 primary-fetched, 12 search-summary awaiting re-verification). Served at `/evidence/{target_id}` and shown in the UI. They ground and limit the rules; they do not enter the score as numbers.
+
+## Ranking
+Results are ranked by an evidence-adjusted score (`coverage * score + (1 - coverage) * 50`) because the raw score favoured cells with missing data (score-vs-coverage Spearman down to -0.74 for polar targets). Raw similarity is still returned and shown (`ranking_basis` in the API).
+
+## Validation (`docs/SCIENTIFIC_VALIDATION_REPORT.md`, `docs/VALIDATION.md`)
+All 14 site-target pairs (10 sites): median percentile 0.788 (95% site-cluster interval 0.56-0.86), AUC 0.84 vs all and 0.72 vs hard controls. Held-out v1: 0.811 (0.44-0.95). Prospective v2 (2 sites, disclosed, too small): 0.755. Complete-data sites 0.861 vs incomplete 0.559. Lunar lava-tube/mare targets are near chance. Drop-one ablation: D8 and D3 carry the result; removing D4 would raise the median to 0.89 (flagged, weight not changed to fit validation). No weights changed this round.
+
+## Experiment validation (`docs/EXPERIMENT_VALIDATION.md`)
+12 experiments x 25 compatible targets run through the real API: 0 invariant violations (strict gates, ordering, coverage, no snow-dominated cells for dry-ground tests).
 
 ## Tests
-28 backend tests (engine, API, real-data provenance), 6 frontend tests, TypeScript check, production build. Browser review of all pages including the 3D globe.
+Backend pytest suite (engine, API, real-data provenance, evidence/measurement schema), frontend vitest, TypeScript check, production build; see the final run in the session report. Browser review of the evidence panel and adjusted scores.
 
 ## Blocked / needs input
 - Multi-year climate: NDVI (~100 MB/month) and land-surface temperature (~70 MB/month) are 2024 only; each extra year is about 2 GB. Not downloaded (the brief says to ask before large downloads).
