@@ -2,29 +2,29 @@
  "pairs": {
   "MOON_WATER_ICE/MOON_PSR": {
    "weights": {
-    "mean_jaccard_top5": 0.599,
-    "top1_stays_within_5deg": 0.97
+    "mean_jaccard_top5": 0.713,
+    "top1_stays_within_5deg": 1.0
    },
    "proxies_off": {
-    "jaccard_top5": 0.667,
+    "jaccard_top5": 1.0,
     "top1_within_5deg": true
    },
    "missing_20pct": {
-    "mean_jaccard_top5": 0.273,
+    "mean_jaccard_top5": 0.204,
     "top1_stays_within_5deg": 0.45
    }
   },
   "MOON_WATER_ICE/MOON_SP_RIDGE": {
    "weights": {
-    "mean_jaccard_top5": 0.624,
-    "top1_stays_within_5deg": 0.98
+    "mean_jaccard_top5": 0.807,
+    "top1_stays_within_5deg": 0.95
    },
    "proxies_off": {
-    "jaccard_top5": 0.667,
-    "top1_within_5deg": true
+    "jaccard_top5": 1.0,
+    "top1_within_5deg": false
    },
    "missing_20pct": {
-    "mean_jaccard_top5": 0.134,
+    "mean_jaccard_top5": 0.2,
     "top1_stays_within_5deg": 0.85
    }
   },
@@ -282,16 +282,16 @@
   },
   "MARS_SUBSURFACE_ICE/MARS_ICE": {
    "weights": {
-    "mean_jaccard_top5": 0.758,
-    "top1_stays_within_5deg": 1.0
+    "mean_jaccard_top5": 0.567,
+    "top1_stays_within_5deg": 0.96
    },
    "proxies_off": {
     "jaccard_top5": 0.667,
     "top1_within_5deg": true
    },
    "missing_20pct": {
-    "mean_jaccard_top5": 0.148,
-    "top1_stays_within_5deg": 0.85
+    "mean_jaccard_top5": 0.113,
+    "top1_stays_within_5deg": 0.7
    }
   },
   "MARS_DUST_THERMAL/MARS_JEZERO": {
@@ -324,16 +324,16 @@
   },
   "MARS_CREW_OPS/MARS_ICE": {
    "weights": {
-    "mean_jaccard_top5": 0.667,
-    "top1_stays_within_5deg": 1.0
+    "mean_jaccard_top5": 0.747,
+    "top1_stays_within_5deg": 0.96
    },
    "proxies_off": {
-    "jaccard_top5": 0.111,
+    "jaccard_top5": 0.25,
     "top1_within_5deg": true
    },
    "missing_20pct": {
-    "mean_jaccard_top5": 0.128,
-    "top1_stays_within_5deg": 0.7
+    "mean_jaccard_top5": 0.1,
+    "top1_stays_within_5deg": 0.25
    }
   },
   "MARS_CREW_OPS/MARS_JEZERO": {
@@ -353,18 +353,18 @@
  },
  "summary": {
   "weights": {
-   "mean_jaccard_top5": 0.621,
-   "top1_stays_within_5deg": 0.654,
+   "mean_jaccard_top5": 0.629,
+   "top1_stays_within_5deg": 0.651,
    "worst_top1_stability": 0.25
   },
   "missing_20pct": {
-   "mean_jaccard_top5": 0.172,
-   "top1_stays_within_5deg": 0.356,
+   "mean_jaccard_top5": 0.169,
+   "top1_stays_within_5deg": 0.332,
    "worst_top1_stability": 0.0
   },
   "proxies_off": {
-   "mean_jaccard_top5": 0.514,
-   "top1_unchanged_share": 0.56
+   "mean_jaccard_top5": 0.546,
+   "top1_unchanged_share": 0.52
   }
  }
 }

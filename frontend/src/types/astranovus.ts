@@ -113,6 +113,35 @@ export interface RankingStability {
   note: string;
 }
 
+export interface V3Metrics {
+  n_pairs: number;
+  n_sites: number;
+  median_percentile?: number;
+  median_ci95_site_cluster?: [number, number] | null;
+  top10_hit?: number;
+  top25_hit?: number;
+  auc_vs_all_controls_by_target?: number | null;
+  auc_vs_hard_controls_by_target?: number | null;
+  reliable?: boolean;
+}
+
+export interface ValidationV3 {
+  available: boolean;
+  note?: string;
+  provenance: { git_commit: string; scoring_files_modified_since_commit: boolean | null; inclusion: string };
+  adopted_variant: string;
+  dataset: {
+    positive_sites: number; eligible_sites: number; exploratory_sites: number; rejected_candidates: number; controls: number; hard_controls: number;
+    cohorts: Record<string, number>;
+  };
+  variants: { id: string; label: string; 'dev_A+B': V3Metrics; frozen_C: V3Metrics }[];
+  ablations: { id: string; label: string; 'dev_A+B': V3Metrics }[];
+  frozen_pairs: { site_id: string; target: string; percentile: number; exploratory: boolean }[];
+  ranking_stability: Record<string, Record<string, number>>;
+  experiment_matrix: { pairs: number; pass: number; pass_with_warnings: number; fail: number };
+  statements: string[];
+}
+
 export interface EvidenceTier {
   tier: string;
   label: string;

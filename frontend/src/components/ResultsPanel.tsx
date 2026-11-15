@@ -77,8 +77,8 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
 
       {result.target_info.is_draft && (
         <InfoNote tone="warn">
-          <strong>Draft reference profile.</strong> The rules describing &ldquo;{result.target_info.name}&rdquo; are v0 team drafts written from general
-          literature. Evidence status: <strong>{result.target_info.evidence.grounded} of {result.target_info.evidence.total}</strong> rules have a retrieved
+          <strong>Draft reference profile.</strong> The rules describing &ldquo;{result.target_info.name}&rdquo; are team-written from the literature and NASA
+          pages, not fitted to any dataset. Evidence status: <strong>{result.target_info.evidence.grounded} of {result.target_info.evidence.total}</strong> rules have a retrieved
           source (qualitative direction only; no LOLA, MOLA, Diviner or CRISM values are used in scoring). Rankings are only as good as this profile.
         </InfoNote>
       )}

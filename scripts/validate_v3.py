@@ -32,6 +32,12 @@ MIN_SITES_RELIABLE = 5
 
 
 def variants(targets):
+    def replace(rules):
+        out = copy.deepcopy(targets)
+        for t in out.values():
+            t["rules"] = copy.deepcopy(rules)
+        return out
+
     def mod(fn):
         out = copy.deepcopy(targets)
         for t in out.values():
@@ -48,6 +54,9 @@ def variants(targets):
         "adjusted_50_drop_D4": (mod(lambda d, r: r.update(weight=0) if d == "D4_terrain" else None), "score_adj", None, False),
         "adjusted_50_exposed_surface": (targets, "score_adj", None, True),
         "raw_exposed_surface": (targets, "score", None, True),
+        "baseline_aridity_only": (replace({"D2_aridity": {"rule": "high", "weight": 1}}), "score_adj", None, True),
+        "baseline_dry_and_barren": (replace({"D2_aridity": {"rule": "high", "weight": 1}, "D3_barren": {"rule": "high", "weight": 1}}), "score_adj", None, True),
+        "baseline_dry_barren_flat": (replace({"D2_aridity": {"rule": "high", "weight": 1}, "D3_barren": {"rule": "high", "weight": 1}, "D4_terrain": {"rule": "low", "weight": 1}}), "score_adj", None, True),
         "exposed_adj_equal_weights": (mod(lambda d, r: r.update(weight=1) if r["weight"] > 0 else None), "score_adj", None, True),
         "exposed_adj_drop_proxies_D5_D6_D7": (mod(lambda d, r: r.update(weight=0) if d in ("D5_rock", "D6_ice", "D7_polar_light") else None), "score_adj", None, True),
         **{f"exposed_adj_drop_{dim}": (mod(lambda d, r, dim=dim: r.update(weight=0) if d == dim else None), "score_adj", None, True)
@@ -96,6 +105,36 @@ def metrics(pos, ctrl):
     return out
 
 
+def paired_bootstrap(a, b, n=2000, seed=7):
+    """Mean percentile difference (a - b) over matching site-target pairs; resampling unit = site."""
+    rng = np.random.default_rng(seed)
+    idx = a.index.intersection(b.index)
+    d = (a.loc[idx] - b.loc[idx]).to_numpy()
+    sites = np.array([i[0] for i in idx])
+    u = np.unique(sites)
+    if len(u) < 3:
+        return {"n_pairs": int(len(d)), "n_sites": int(len(u)), "mean_diff": round(float(d.mean()), 3) if len(d) else None, "ci95": None}
+    stats = []
+    for _ in range(n):
+        pick = rng.choice(u, len(u), replace=True)
+        stats.append(float(np.concatenate([d[sites == g] for g in pick]).mean()))
+    return {"n_pairs": int(len(d)), "n_sites": int(len(u)), "mean_diff": round(float(d.mean()), 3), "ci95": [round(float(np.percentile(stats, 2.5)), 3), round(float(np.percentile(stats, 97.5)), 3)]}
+
+
+def provenance(ds, grid_path):
+    import subprocess
+    def sha(path):
+        return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()[:16]
+    try:
+        commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "scripts/validate_v3.py", "model", "data/targets.json"], cwd=ROOT, capture_output=True, text=True).stdout.strip())
+    except Exception:  # noqa: BLE001
+        commit, dirty = "unknown", None
+    return {"git_commit": commit, "scoring_files_modified_since_commit": dirty, "targets_json_sha256_16": sha(ROOT / "data/targets.json"), "dataset_sha256_16": sha(ROOT / "data/analog_dataset_v3.json"),
+            "grid_sha256_16": sha(grid_path), "readiness_sha256_16": sha(ROOT / "data/target_readiness.json"), "random_seed_bootstrap": "numpy default_rng(20261115) / 7 for paired",
+            "inclusion": "positives: validation_eligibility in {eligible, eligible_historical} for primary metrics; exploratory reported separately; nearest land cell within 5 deg (A) / 3.5 deg (B, C)"}
+
+
 def main():
     final = "--final" in sys.argv
     ds = json.load(open(ROOT / "data/analog_dataset_v3.json", encoding="utf-8"))
@@ -130,7 +169,8 @@ def main():
                 rows_ctl.append(dict(site_id=c["site_id"], cohort=c["cohort"], target=t, cell_id=int(cell.cell_id), dist=d, in_grid=d <= MAX_DIST[c["cohort"]], hard=c["hard"]))
     P, C = pd.DataFrame(rows_pos), pd.DataFrame(rows_ctl)
 
-    res = {"stage": "final" if final else "development", "cohorts_scored": cohorts, "frozen_hash": fz["sha256"], "variants": {}, "excluded_out_of_grid": {}}
+    pair_pct = {}
+    res = {"provenance": provenance(ds, ROOT / "data/processed/earth_grid.csv"), "stage": "final" if final else "development", "cohorts_scored": cohorts, "frozen_hash": fz["sha256"], "variants": {}, "excluded_out_of_grid": {}}
     res["excluded_out_of_grid"] = {"positives": P[~P.in_grid][["site_id", "target", "dist"]].round(2).to_dict("records"), "controls": C[~C.in_grid][["site_id", "target", "dist"]].round(2).drop_duplicates().to_dict("records")}
     P, C = P[P.in_grid].copy(), C[C.in_grid].copy()
 
@@ -153,6 +193,10 @@ def main():
         v["by_target_A+B"] = {t: metrics(dev[dev.target == t], Cv[(Cv.cohort != "C_frozen_independent")]) for t in sorted(dev.target.unique())}
         v["by_completeness_A+B"] = {"coverage>=0.9": metrics(dev[dev.coverage >= 0.9], Cv), "coverage<0.9": metrics(dev[dev.coverage < 0.9], Cv)}
         res["variants"][vname] = v
+        pair_pct[vname] = dev.set_index(["site_id", "target"]).percentile
+        if final:
+            fp = prim[prim.cohort == "C_frozen_independent"]
+            pair_pct[vname + "|C"] = fp.set_index(["site_id", "target"]).percentile
         if final:
             # per-pair listing of the frozen cohort for the report (no selection based on it)
             res.setdefault("frozen_pairs", {})[vname] = Pv[Pv.cohort == "C_frozen_independent"][["site_id", "target", "percentile", "coverage", "exploratory"]].round(3).to_dict("records")
@@ -160,6 +204,13 @@ def main():
             res["pairs_raw_dev"] = Pv[Pv.cohort != "C_frozen_independent"][["site_id", "cohort", "target", "percentile", "coverage", "exploratory", "dist"]].round(3).to_dict("records")
             res["controls_raw_dev"] = Cv[Cv.cohort != "C_frozen_independent"][["site_id", "target", "hard", "percentile", "coverage"]].round(3).to_dict("records")
 
+    adopted = "adjusted_50_exposed_surface"
+    res["comparisons_vs_adopted"] = {}
+    for other in ("raw", "adjusted_50", "equal_adjusted_50", "exposed_adj_equal_weights", "baseline_aridity_only", "baseline_dry_and_barren", "baseline_dry_barren_flat"):
+        res["comparisons_vs_adopted"][other] = {"A+B": paired_bootstrap(pair_pct[adopted], pair_pct[other])}
+        if final:
+            res["comparisons_vs_adopted"][other]["C"] = paired_bootstrap(pair_pct[adopted + "|C"], pair_pct[other + "|C"])
+    res["random_reference"] = {"median_percentile": 0.5, "top25_hit": 0.25, "top10_hit": 0.10, "auc": 0.5}
     out = ROOT / ("data/validation_v3_final.json" if final else "data/validation_v3_dev.json")
     json.dump(res, open(out, "w", encoding="utf-8"), indent=1)
     for vn, v in res["variants"].items():

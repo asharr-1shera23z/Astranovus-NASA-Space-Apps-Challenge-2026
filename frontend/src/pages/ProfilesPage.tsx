@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { fetchCompare } from '../api/client';
 import { DimensionTable } from '../components/DimensionTable';
+import { SuitabilityPanel } from '../components/SuitabilityPanel';
 import { EarthLimitsNote } from '../components/DataBanners';
 import type { PageId } from '../components/Navbar';
 import { ScoreDonut } from '../components/ScoreDonut';
@@ -140,6 +141,11 @@ export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }
           )}
         </div>
       </div>
+
+      <section className="space-y-2">
+        <h2 className="font-display font-bold text-base text-[#142B50]">How far the evidence supports this match</h2>
+        <SuitabilityPanel region={r} target={result.target_info} stability={result.ranking_stability} />
+      </section>
 
       <section className="space-y-2">
         <h2 className="font-display font-bold text-base text-[#142B50]">Dimension breakdown for {m.experiment.short_name}</h2>

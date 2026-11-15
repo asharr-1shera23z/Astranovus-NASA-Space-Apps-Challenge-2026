@@ -8,6 +8,7 @@ import type {
   ScoredCell,
   TargetId,
   ValidationResponse,
+  ValidationV3,
 } from '../types/astranovus';
 
 /** Base URL of the FastAPI service. Configure with VITE_API_URL (see .env.example). */
@@ -73,4 +74,5 @@ export function fetchCompare(lat: number, lon: number, signal?: AbortSignal) {
   return getJson<CompareResponse>(`/compare?lat=${lat}&lon=${lon}`, signal);
 }
 
+export const fetchValidationV3 = (signal?: AbortSignal) => getJson<ValidationV3>('/validation/v3', signal);
 export const fetchValidation = (signal?: AbortSignal) => getJson<ValidationResponse>('/validation', signal);

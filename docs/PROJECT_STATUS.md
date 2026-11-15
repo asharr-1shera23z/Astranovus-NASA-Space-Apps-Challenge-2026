@@ -12,7 +12,7 @@ Grid: 3,435 land cells at 2.5 degrees (about 280 km), including Antarctica. MODI
 | D3 barren | MODIS MOD13C2 peak NDVI, 2024 | derived | 69% (ice-covered cells are undefined by design; the reason is stored per cell) |
 | D4 terrain | NASA SRTMGL30 (~1 km) north of 60S; NSIDC-0422 Antarctic 1 km DEM south of 60S | derived, coarse | 100% |
 | D5 rock composition | NASA ASTER GED v4.1 silicate contrast (July 2014 file); silica-poor = high | proxy, bare ground only | 13% |
-| D6 ice | MODIS MOD10CM snow cover, 2015-2024 monthly climatology (peak) | proxy: snow cover only | 100% |
+| D6 ice | MODIS MOD10CM snow cover, 2015-2024 monthly climatology (mean over observed months; peak until 2026-11-16) | proxy: snow cover only | 100% |
 | D7 light | NASA POWER seasonal insolation swing | derived proxy | 100% |
 | D8 thermal swing | MODIS MOD11C3 day minus night land-surface temperature | derived | 100% |
 
@@ -49,8 +49,16 @@ Backend pytest suite (engine, API, real-data provenance, evidence/measurement sc
 - Planetary evidence: 35 rows, 30 primary-fetched, 5 unverified (was 29 / 17 / 12); five corrections where pages differed from earlier summaries; an evidence-quality grade per row.
 - Validation: dataset v3 with 18 sites (11 historical, 4 eligible new, 3 exploratory new), 17 rejected candidates with reasons, 25 controls (19 hard) with written rationale; cohorts A historical / B development / C frozen independent (hash-locked, scored once). Primary pairs: A+B 14-15 pairs from 10-11 sites (median 0.82, AUC vs hard controls 0.83 with the adopted rule); frozen C: 3 sites, median 0.80, unreliable (Gobustan mud volcano 0.33).
 - Model/API: exposed-surface requirement for ground-defined targets (the Antarctic ice sheet no longer dominates mud-volcano results), per-region suitability status, evidence tier, ranking-stability note. Weights unchanged.
-- Findings: D3, D8, D2 carry the score; D1/D6/D7 are redundant (rho 0.93-0.97); D4 has a scale mismatch; single-cell #1 regions are unstable (65% under weight noise, 36% under 20% missing data); lava-tube, mare, mud-volcano, Jezero, chloride and dune targets are climate/terrain similarity only.
+- Findings: D3, D8, D2 carry the score; D1/D6/D7 are redundant (rho 0.93-0.97); D4 has a scale mismatch; single-cell #1 regions are unstable (65% under weight noise, 33% under 20% missing data); lava-tube, mare, mud-volcano, Jezero, chloride and dune targets are climate/terrain similarity only.
 - Tests: 58 backend, 6 frontend, tsc, build.
+
+## Phase-complete status (2026-11-16, after the remaining-phase work)
+- Baselines (9.4): a generic dry-and-barren score matches the full model on the benchmark (development median 0.857 vs 0.817; frozen 0.809 vs 0.798): no demonstrated advantage of the target-specific rules. Reported in `docs/SCIENTIFIC_VALIDATION_REPORT.md`.
+- Failure cases documented in `docs/FAILURE_CASE_ANALYSIS.md` (geology invisible to the model, coarse grid, rules written for the planetary environment, weak sources).
+- Integrity audit (`scripts/integrity_audit.py`, `data/integrity_audit.json`): ranges, fill values, orientation, dimension direction, dates, proxy labels and missing reasons all pass. One real defect fixed: D5 missing-reason text called vegetated, seasonally snowy cells "snow/ice-covered" (`scripts/relabel_missing_reasons.py`; data values unchanged; builder updated). One stale backend description fixed (D6 fallback text said POWER temperature proxy). Frontend Methodology page rewritten to match the engine (adjusted score, exposed-surface rule, current limitations, v3 evaluation, baselines).
+- D6 review done (`docs/D6_SNOW_METRIC_REVIEW.md`): peak -> mean snow cover over observed months; previous grid and results archived in `data/processed/archive/pre_d6_mean/`; frozen-cohort metrics unchanged (no frozen pair uses D6).
+- Open decisions that need the project owner: (1) D4 scale-appropriate metric; (2) whether to keep the target-specific rules given the baseline result (a generic dry-and-barren score matches or beats the full model); (3) whether to add lithology / evaporite / dune layers (new data).
+- Non-portal open work: read the search-summary sources behind the new analog sites (Sauro 2020, PANGAEA, Wang 2016, White Sands, BASALT, Jingpo/Jeju review); find more independent sites per target; confirm the Space Apps deadline.
 
 ## Blocked / needs input
 - Multi-year climate: NDVI (~100 MB/month) and land-surface temperature (~70 MB/month) are 2024 only; each extra year is about 2 GB. Not downloaded (the brief says to ask before large downloads).

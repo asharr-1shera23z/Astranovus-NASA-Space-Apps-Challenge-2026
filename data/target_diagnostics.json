@@ -8,7 +8,7 @@
    "D4_terrain": -0.05,
    "D3_barren": 0.01,
    "D5_rock": 0.41,
-   "D6_ice": 0.94
+   "D6_ice": 0.97
   },
   "D2_aridity": {
    "D1_cold": 0.54,
@@ -18,7 +18,7 @@
    "D4_terrain": -0.14,
    "D3_barren": 0.81,
    "D5_rock": -0.68,
-   "D6_ice": 0.43
+   "D6_ice": 0.47
   },
   "D7_polar_light": {
    "D1_cold": 0.97,
@@ -28,7 +28,7 @@
    "D4_terrain": -0.11,
    "D3_barren": 0.07,
    "D5_rock": 0.39,
-   "D6_ice": 0.93
+   "D6_ice": 0.96
   },
   "D8_thermal_swing": {
    "D1_cold": -0.79,
@@ -38,7 +38,7 @@
    "D4_terrain": 0.14,
    "D3_barren": 0.55,
    "D5_rock": -0.05,
-   "D6_ice": -0.78
+   "D6_ice": -0.83
   },
   "D4_terrain": {
    "D1_cold": -0.05,
@@ -48,7 +48,7 @@
    "D4_terrain": 1.0,
    "D3_barren": 0.13,
    "D5_rock": 0.61,
-   "D6_ice": -0.06
+   "D6_ice": 0.0
   },
   "D3_barren": {
    "D1_cold": 0.01,
@@ -58,7 +58,7 @@
    "D4_terrain": 0.13,
    "D3_barren": 1.0,
    "D5_rock": -0.54,
-   "D6_ice": -0.06
+   "D6_ice": -0.04
   },
   "D5_rock": {
    "D1_cold": 0.41,
@@ -71,12 +71,12 @@
    "D6_ice": 0.66
   },
   "D6_ice": {
-   "D1_cold": 0.94,
-   "D2_aridity": 0.43,
-   "D7_polar_light": 0.93,
-   "D8_thermal_swing": -0.78,
-   "D4_terrain": -0.06,
-   "D3_barren": -0.06,
+   "D1_cold": 0.97,
+   "D2_aridity": 0.47,
+   "D7_polar_light": 0.96,
+   "D8_thermal_swing": -0.83,
+   "D4_terrain": 0.0,
+   "D3_barren": -0.04,
    "D5_rock": 0.66,
    "D6_ice": 1.0
   }
@@ -120,10 +120,10 @@
    },
    "rank_correlation_of_each_dimension_with_score": {
     "D1_cold": 0.86,
-    "D2_aridity": 0.81,
-    "D3_barren": 0.64,
-    "D6_ice": 0.82,
-    "D4_terrain": 0.27
+    "D2_aridity": 0.82,
+    "D3_barren": 0.66,
+    "D6_ice": 0.83,
+    "D4_terrain": 0.24
    },
    "top50_adjusted_by_region": {
     "Antarctica": 50
@@ -133,7 +133,7 @@
     "D1_cold": 0.98,
     "D2_aridity": 0.96,
     "D3_barren": NaN,
-    "D6_ice": 0.81,
+    "D6_ice": 0.86,
     "D4_terrain": 0.92
    }
   },
@@ -171,12 +171,12 @@
     "surface_exposure": 0.154
    },
    "rank_correlation_of_each_dimension_with_score": {
-    "D1_cold": 0.85,
-    "D2_aridity": 0.81,
+    "D1_cold": 0.86,
+    "D2_aridity": 0.82,
     "D6_ice": 0.82,
-    "D4_terrain": 0.3,
-    "D3_barren": 0.59,
-    "D8_thermal_swing": -0.58
+    "D4_terrain": 0.26,
+    "D3_barren": 0.62,
+    "D8_thermal_swing": -0.6
    },
    "top50_adjusted_by_region": {
     "Antarctica": 50
@@ -185,7 +185,7 @@
    "top50_mean_similarity": {
     "D1_cold": 0.99,
     "D2_aridity": 0.96,
-    "D6_ice": 0.81,
+    "D6_ice": 0.86,
     "D4_terrain": 0.9,
     "D3_barren": NaN,
     "D8_thermal_swing": 0.21

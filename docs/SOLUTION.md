@@ -28,7 +28,7 @@ large day-night swings. So the user chooses **Moon/Mars → experiment → refer
 | D3 barren | MODIS MOD13C2 peak NDVI (2024) | little vegetation | rock type, or "geology" |
 | D4 terrain | NASA SRTMGL30 (~1 km) and NSIDC-0422 Antarctic 1 km DEM: relief in the cell | landscape-scale relief | rover-scale slope |
 | D5 rock composition | NASA ASTER GED emissivity (silicate contrast), bare ground only | silica-poor (mafic-like) vs silica-rich bare surface proxy | rock exposure, mineral identification or lithology |
-| D6 ice | MODIS MOD10CM snow cover, 2015-2024 climatology (peak) | snow-cover proxy | glacier presence, permafrost or subsurface ice |
+| D6 ice | MODIS MOD10CM snow cover, 2015-2024 climatology (mean over observed months) | snow-cover proxy | glacier presence, permafrost or subsurface ice |
 | D7 light | NASA POWER seasonal insolation swing | high-latitude light seasonality | lunar illumination |
 | D8 thermal swing | MODIS MOD11C3 land-surface temperature day minus night | diurnal surface swing | air-temperature range |
 

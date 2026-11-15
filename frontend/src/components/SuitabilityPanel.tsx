@@ -82,6 +82,9 @@ export function SuitabilityPanel({ region: r, target, stability }: { region: Reg
           {Math.round(stability.missing_20pct_top1_within_5deg * 100)}% of runs where 20% of cells lose a dimension. Treat the ranking as a broad region, not an exact cell.
         </p>
       )}
+      <p className="text-[11px] text-[#142B50] bg-[#FFF4E5] border border-[#A15C00]/25 rounded-lg px-3 py-2">
+        <strong>Benchmark note:</strong> on the current validation benchmark a simple dry-and-barren score performs as well as, or better than, this full model, so the target-specific ranking is not shown to add skill. Use results as screening regions to investigate.
+      </p>
       <p className="text-[10px] text-[#68788F]">
         Category values are weighted means of the dimension similarities above, not independent measurements. Operational suitability (access, permits, logistics) and
         geology identity (lithology, subsurface voids, sedimentary volcanism) are not computed.

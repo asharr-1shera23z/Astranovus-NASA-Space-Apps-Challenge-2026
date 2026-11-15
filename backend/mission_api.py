@@ -35,7 +35,7 @@ SPARSE_DIM_COVERAGE = 0.5
 _PROVENANCE: dict[str, tuple[str, str]] = {
     "D1_cold": ("derived", "NASA POWER T2M annual-mean 2 m air temperature, percentile-ranked (colder = higher). Air temperature, not land-surface temperature."),
     "D2_aridity": ("derived", "NASA POWER PRECTOTCORR annual precipitation, percentile-ranked (drier = higher)."),
-    "D6_ice": ("proxy", "PROXY: share of months with NASA POWER mean air temperature below 0 C. This is not a snow or ice measurement."),
+    "D6_ice": ("proxy", "PROXY: MODIS MOD10CM snow-cover climatology (mean snow cover over observed months, percentile-ranked). Not a glacier, permafrost or subsurface-ice measurement."),
     "D7_polar_light": ("derived", "NASA POWER ALLSKY_SFC_SW_DWN seasonal swing in surface solar irradiance, percentile-ranked."),
     "D8_thermal_swing": ("derived", "NASA POWER T2M_MAX minus T2M_MIN annual air-temperature range, percentile-ranked."),
 }
@@ -352,6 +352,13 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         if not p.exists():
             return {"available": False, "note": "Validation has not been run on the real grid (python scripts/validate_known_analogs.py)."}
         return {"available": True, **json.load(open(p, encoding="utf-8"))}
+
+    @router.get("/validation/v3")
+    def get_validation_v3():
+        p = root / "data/validation_v3_summary.json"
+        if not p.exists():
+            return {"available": False, "note": "v3 validation summary not built (python scripts/validate_v3.py --final; python scripts/build_validation_v3_summary.py)."}
+        return json.load(open(p, encoding="utf-8"))
 
     @router.get("/data_status")
     def get_data_status():

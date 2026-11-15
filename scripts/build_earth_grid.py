@@ -19,7 +19,7 @@ Outputs:
 Dimension policy (see docs/METHODOLOGY.md):
     D1_cold, D2_aridity, D7_polar_light  NASA POWER climatology (full-year, kept from the validated v1 grid)
     D3_barren          MOD13C2 NDVI, peak monthly NDVI over the available months, inverted, percentile
-    D6_ice             MOD10CM snow cover, peak monthly snow cover over available months, percentile (PROXY)
+    D6_ice             MOD10CM snow cover, mean monthly snow cover over observed months (2015-2024 climatology), percentile (PROXY)
     D8_thermal_swing   MOD11C3 land-surface-temperature day-night range, mean over available months,
                        only where EVERY available month is valid; percentile
     D4_terrain, D5_rock  no data source integrated yet -> left empty (never fabricated)
@@ -435,7 +435,7 @@ def main():
     # --- dimensions
     out = base.copy()
     out["D3_barren"] = pct(feat["ndvi_peak"], invert=True).values
-    out["D6_ice"] = pct(feat["snow_peak_pct"]).values
+    out["D6_ice"] = pct(feat["snow_mean_valid_pct"]).values   # mean over observed months; was PEAK until 2026-11-16 (saturated), see docs/D6_SNOW_METRIC_REVIEW.md
     power_d8 = base["D8_thermal_swing"].copy()
     out["D8_thermal_swing"] = pct(feat["lst_dtr_K_mean"]).values
     out["D4_terrain"] = pct(feat["dem_relief_m"]).values       # landscape relief within the cell (P95-P5 of 1 km elevation)
@@ -453,7 +453,7 @@ def main():
     snowy = feat["snow_peak_pct"].fillna(0) >= 50
     feat["D3_missing_reason"] = reason("D3_barren", [(snowy, "snow/ice-covered surface: MODIS flags vegetation-index pixels as snow/ice, so barren ground is undefined")])
     feat["D4_missing_reason"] = reason("D4_terrain", [(feat["lat"] < -86, "south of the Antarctic DEM coverage (about 86S)"), (feat["lat"] < -60, "no usable elevation data")])
-    feat["D5_missing_reason"] = reason("D5_rock", [(snowy, "snow/ice-covered: the composition proxy only applies to bare ground"), (feat["ndvi_peak"] > 0.2, "vegetated: the composition proxy only applies to bare ground"), (feat["lat"] < -60, "too little bare, non-gap-filled ASTER land pixels (Antarctic rock outcrops are tiny at this scale)")])
+    feat["D5_missing_reason"] = reason("D5_rock", [(feat["ndvi_peak"] > 0.2, "vegetated: the composition proxy only applies to bare ground"), (snowy, "snow cover reaches 50% or more in at least one month (climatology): the composition proxy is not computed for snow-affected cells"), (feat["lat"] < -60, "too little bare, non-gap-filled ASTER land pixels (Antarctic rock outcrops are tiny at this scale)")])
     feat["D6_missing_reason"] = reason("D6_ice", [])
     feat["D8_missing_reason"] = reason("D8_thermal_swing", [(feat["lat"].abs() > 60, "too many polar-night months without a valid day-night pair")])
     feat["D8_power_air_dtr_pct_v1"] = power_d8.values   # previous POWER air-temperature-range dimension, kept for traceability
@@ -520,7 +520,7 @@ def main():
             "D3_barren": {"status": "derived", "temporal": tshort, "source": "MODIS MOD13C2 v061 NDVI, peak monthly NDVI (inverted percentile). Low NDVI also occurs over bare soil, sand and rock alike. Snow/ice-covered cells are left empty (MODIS flags those pixels), with the reason stored per cell."},
             "D4_terrain": {"status": "derived", "temporal": "static (SRTM 2000; Antarctic DEM 1994-2008)", "source": "Relief = P95 minus P5 of ~1 km elevation inside the cell, percentile. North of 60S: NASA SRTMGL30 v002 (LP DAAC documentation is inconsistent about its northern extent, so values north of 60N are of unconfirmed provenance and lower confidence). South of 60S: NSIDC-0422 Antarctic 1 km DEM (ERS-1 radar + ICESat laser, kriged; smoother than SRTM, coverage ends near 86S). Landscape-scale relief only, not rover-scale slope; 30 m SRTM check exists only for top regions."},
             "D5_rock": {"status": "proxy", "temporal": "static (ASTER GED v4.1, July 2014 monthly file)", "source": "NASA ASTER Global Emissivity Dataset v4.1 (AG5KMMOH): silicate contrast = mean(E13,E14) - mean(E10,E11,E12) over bare, land, non-gap-filled 0.05 deg pixels; D5 = inverted percentile, so high = silica-poor (mafic, basalt-like). A thermal-infrared surface-composition proxy for bare ground only: NOT rock exposure, NOT mineral identification, NOT lithology (GLiM and EMIT not integrated). MODIS MOD11C3 emissivity is kept as an independent cross-check."},
-            "D6_ice": {"status": "proxy", "temporal": f"multi-year monthly climatology {min(snow_years)}-{max(snow_years)} ({len(snow_years)} years)", "source": "MODIS MOD10CM v061 snow cover extent, peak of the per-calendar-month climatology over all downloaded years. A snow-cover proxy; NOT glacier presence, permafrost, ground ice or subsurface water ice. A separate perennial_snow_ice flag (snow >= 50 % in every observed month, >= 6 months) is stored in earth_grid_features.csv and is not part of the score."},
+            "D6_ice": {"status": "proxy", "temporal": f"multi-year monthly climatology {min(snow_years)}-{max(snow_years)} ({len(snow_years)} years)", "source": "MODIS MOD10CM v061 snow cover extent, mean of the monthly snow cover over all observed months of the climatology (percentile-ranked). A snow-cover duration/extent proxy; NOT glacier presence, permafrost, ground ice or subsurface water ice. A separate perennial_snow_ice flag (snow >= 50 % in every observed month, >= 6 months) is stored in earth_grid_features.csv and is not part of the score."},
             "D7_polar_light": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER ALLSKY_SFC_SW_DWN seasonal swing. A terrestrial seasonal-insolation proxy; does not reproduce lunar illumination."},
             "D8_thermal_swing": {"status": "derived", "temporal": tshort, "source": f"MODIS MOD11C3 v061 land-surface-temperature day minus night, mean over valid months, requiring at least {min_months} of {n_months} valid months."},
         },
