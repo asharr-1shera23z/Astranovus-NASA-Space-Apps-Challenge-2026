@@ -6,5 +6,7 @@ services:
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
+      - key: ASTRANOVUS_ENV
+        value: production   # refuses wildcard CORS and any synthetic sample grid
       - key: ASTRANOVUS_CORS_ORIGINS
         value: https://YOUR-FRONTEND-DOMAIN   # set to the deployed frontend origin

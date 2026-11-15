@@ -18,6 +18,15 @@ frontend/dist/
 !data/processed/earth_grid_features.csv
 !data/processed/earth_grid_metadata.json
 !data/processed/archive/
-!data/processed/archive/*.csv
+# legacy duplicate grid backups: kept on the local disk, not in Git (small JSON provenance and pre_d6_mean/ stay tracked)
+data/processed/archive/*.csv
+# frozen baseline snapshot used by the tests (153 KB)
+!data/processed/baseline_2026-11-16/
 
 !data/processed/stage2.json
+
+# local tooling and logs
+.pytest_cache/
+.venv*/
+*.log
+.claude/

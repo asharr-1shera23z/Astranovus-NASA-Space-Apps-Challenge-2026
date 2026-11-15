@@ -58,10 +58,10 @@
    ],
    "screening_scope": "partial_environmental_assessment",
    "ranking_stability": {
-    "weights_top1_within_5deg": 0.97,
-    "weights_mean_jaccard_top5": 0.599,
+    "weights_top1_within_5deg": 1.0,
+    "weights_mean_jaccard_top5": 0.713,
     "missing_20pct_top1_within_5deg": 0.45,
-    "missing_20pct_mean_jaccard_top5": 0.273,
+    "missing_20pct_mean_jaccard_top5": 0.204,
     "note": "Precomputed (scripts/ranking_stability.py) for the default weights: how often the #1 region stays within 5 degrees when dimension weights are perturbed (sigma 0.3) or 20% of cells lose a dimension."
    },
    "scientific_warnings": [
@@ -129,10 +129,10 @@
    ],
    "screening_scope": "partial_environmental_assessment",
    "ranking_stability": {
-    "weights_top1_within_5deg": 0.98,
-    "weights_mean_jaccard_top5": 0.624,
+    "weights_top1_within_5deg": 0.95,
+    "weights_mean_jaccard_top5": 0.807,
     "missing_20pct_top1_within_5deg": 0.85,
-    "missing_20pct_mean_jaccard_top5": 0.134,
+    "missing_20pct_mean_jaccard_top5": 0.2,
     "note": "Precomputed (scripts/ranking_stability.py) for the default weights: how often the #1 region stays within 5 degrees when dimension weights are perturbed (sigma 0.3) or 20% of cells lose a dimension."
    },
    "scientific_warnings": [],
@@ -1476,10 +1476,10 @@
    ],
    "screening_scope": "partial_environmental_assessment",
    "ranking_stability": {
-    "weights_top1_within_5deg": 1.0,
-    "weights_mean_jaccard_top5": 0.758,
-    "missing_20pct_top1_within_5deg": 0.85,
-    "missing_20pct_mean_jaccard_top5": 0.148,
+    "weights_top1_within_5deg": 0.96,
+    "weights_mean_jaccard_top5": 0.567,
+    "missing_20pct_top1_within_5deg": 0.7,
+    "missing_20pct_mean_jaccard_top5": 0.113,
     "note": "Precomputed (scripts/ranking_stability.py) for the default weights: how often the #1 region stays within 5 degrees when dimension weights are perturbed (sigma 0.3) or 20% of cells lose a dimension."
    },
    "scientific_warnings": [
@@ -1685,14 +1685,15 @@
    ],
    "screening_scope": "partial_environmental_assessment",
    "ranking_stability": {
-    "weights_top1_within_5deg": 1.0,
-    "weights_mean_jaccard_top5": 0.667,
-    "missing_20pct_top1_within_5deg": 0.7,
-    "missing_20pct_mean_jaccard_top5": 0.128,
+    "weights_top1_within_5deg": 0.96,
+    "weights_mean_jaccard_top5": 0.747,
+    "missing_20pct_top1_within_5deg": 0.25,
+    "missing_20pct_mean_jaccard_top5": 0.1,
     "note": "Precomputed (scripts/ranking_stability.py) for the default weights: how often the #1 region stays within 5 degrees when dimension weights are perturbed (sigma 0.3) or 20% of cells lose a dimension."
    },
    "scientific_warnings": [
-    "data state is 'partial': D6_ice"
+    "data state is 'partial': D6_ice",
+    "#1 region unstable when data are missing (25%)"
    ],
    "validation_result": "pass_with_warnings"
   },
