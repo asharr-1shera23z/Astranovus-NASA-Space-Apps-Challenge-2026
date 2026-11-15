@@ -254,6 +254,16 @@ export function DiscoverPage() {
           </div>
         </div>
       )}
+
+      <section aria-label="Warnings and limitations" className="rounded-2xl border border-[#A15C00]/30 bg-[#FFF8EC] p-5 space-y-2">
+        <h2 className="font-display font-bold text-sm text-[#6B3F00]">Warnings and limitations</h2>
+        <ul className="list-disc pl-5 text-xs text-[#6B3F00] space-y-1">
+          <li>The heatmap and markers are 2.5° grid cells (about 280 km): regions to investigate, not certified sites.</li>
+          <li>Known analogs and hypotheses are shown for context from literature or team research; hypotheses are unverified and never validated.</li>
+          <li>Similarity uses climate, terrain and surface layers; geology (lava tubes, basalt, mud volcanoes, sediments, evaporites, dunes) is not measured.</li>
+          <li>Snow cover is not ice, composition is a proxy for bare ground only, and missing data are never filled.</li>
+        </ul>
+      </section>
     </div>
   );
 }

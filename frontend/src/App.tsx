@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { AstranovusLogo } from './components/AstranovusLogo';
+import { NeuralBackdrop } from './components/NeuralBackdrop';
 import { Navbar, type PageId } from './components/Navbar';
 import { AboutPage } from './pages/AboutPage';
 import { ComparePage } from './pages/ComparePage';
@@ -36,9 +38,12 @@ function Shell() {
   }, [page, m.body, m.experimentId, m.targetId]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F8FF] text-[#142B50]">
+    <div className="min-h-screen flex flex-col bg-[#F4F8FF] text-[#142B50] relative overflow-x-clip">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-70" aria-hidden="true">
+        <NeuralBackdrop />
+      </div>
       <Navbar activePage={page} onNavigate={navigate} />
-      <main className="flex-1">
+      <main className="flex-1 relative z-[1]">
         {page === 'home' && <HomePage onNavigate={navigate} />}
         {page === 'explore' && <ExplorePage onOpenProfile={() => navigate('profiles')} />}
         {page === 'profiles' && <ProfilesPage onNavigate={navigate} />}
@@ -47,14 +52,19 @@ function Shell() {
         {page === 'methodology' && <MethodologyPage />}
         {page === 'about' && <AboutPage />}
       </main>
-      <footer className="bg-[#FFFFFF] border-t border-[#E1E8F0] mt-12">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-[#68788F]">
-          <div>
-            <strong className="text-[#142B50]">ASTRANOVUS</strong> · Developed by Team Astravant for NASA Space Apps Challenge 2026.
+      <footer className="relative z-[1] bg-[#000000] border-t border-[#16305F] mt-12 text-[#B7C6DF]">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 grid grid-cols-1 md:grid-cols-12 gap-6 items-center text-xs">
+          <div className="md:col-span-4">
+            <AstranovusLogo variant="full" className="h-24 w-auto" />
           </div>
-          <div className="max-w-xl sm:text-right">
-            Scores are team-generated, purpose-specific estimates from public Earth-observation data. They are not official NASA ratings or landing-site
-            certification.
+          <div className="md:col-span-8 space-y-1.5 md:text-right">
+            <div>
+              Developed by <strong className="text-[#FFFFFF]">Team Astravant</strong> for the NASA Space Apps Challenge 2026.
+            </div>
+            <div className="max-w-2xl md:ml-auto">
+              An Earth analog screening and research-support tool. Scores are team-generated estimates from public NASA-derived data, not official NASA ratings, and results
+              are regions to investigate, not certified landing or field sites.
+            </div>
           </div>
         </div>
       </footer>

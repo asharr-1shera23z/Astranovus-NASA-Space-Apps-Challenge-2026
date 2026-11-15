@@ -52,9 +52,9 @@ export function ExplorePage({ onOpenProfile }: { onOpenProfile: () => void }) {
 
   const list = m.experiments.filter((e) => !m.body || e.body === m.body);
   const steps = [
-    { n: 1, label: 'Planetary body', done: !!m.body },
-    { n: 2, label: 'Experiment', done: !!m.experimentId },
-    { n: 3, label: 'Reference site', done: !!m.targetId && !!m.experimentId },
+    { n: 1, label: 'Destination', done: !!m.body },
+    { n: 2, label: 'Test objective', done: !!m.experimentId },
+    { n: 3, label: 'Planetary reference', done: !!m.targetId && !!m.experimentId },
     { n: 4, label: 'Earth analogs', done: m.resultStatus === 'ready' },
   ];
   const accent = m.body ? BODY_ACCENT[m.body] : '#0B5ED7';
@@ -62,10 +62,9 @@ export function ExplorePage({ onOpenProfile }: { onOpenProfile: () => void }) {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 space-y-8">
       <div className="space-y-3">
-        <h1 className="font-display font-extrabold text-3xl text-[#142B50]">Mission-based Earth analog discovery</h1>
+        <h1 className="font-display font-extrabold text-3xl text-[#142B50]">Find Earth analogs for your mission</h1>
         <p className="text-sm text-[#68788F] max-w-3xl leading-relaxed">
-          Choose where the mission is going and what you want to test. ASTRANOVUS asks its scoring engine which Earth regions best match that
-          specific purpose, and tells you what data stands behind each answer.
+          Choose a destination and what you want to test. ASTRANOVUS ranks Earth regions for that objective and shows the data behind each answer.
         </p>
         <SyntheticDataWarning />
         <DataCoverageStrip />
@@ -98,7 +97,7 @@ export function ExplorePage({ onOpenProfile }: { onOpenProfile: () => void }) {
       {/* Step 1 */}
       <section aria-labelledby="step1" className="space-y-3">
         <h2 id="step1" className="font-display font-bold text-lg text-[#142B50]">
-          1. Where is the mission going?
+          1. Choose a destination
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
           {(['moon', 'mars'] as Body[]).map((b) => {
@@ -137,12 +136,9 @@ export function ExplorePage({ onOpenProfile }: { onOpenProfile: () => void }) {
             <h2 id="step2" className="font-display font-bold text-lg text-[#142B50]">
               2. What do you want to test on {bodyLabel(m.body)}?
             </h2>
-            <p className="text-xs text-[#68788F]">
-              Each scenario maps onto an existing ASTRANOVUS mission profile. Open &ldquo;Why it matters&rdquo; to see the NASA basis and whether NASA
-              documents the activity itself.
-            </p>
+            <p className="text-xs text-[#68788F]">Click an objective to open its details; the experiment is selected at the same time.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
             {list.map((e) => (
               <ExperimentCard key={e.id} experiment={e} selected={m.experimentId === e.id} onSelect={() => m.setExperiment(e.id)} />
             ))}

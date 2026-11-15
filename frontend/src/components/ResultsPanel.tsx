@@ -2,9 +2,11 @@ import { Download, Globe2, Map as MapIcon } from 'lucide-react';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useMission } from '../state/MissionContext';
 import type { Region } from '../types/astranovus';
+import { pickRegionPhoto } from '../data/earthPhotos';
+import { REFERENCE_SITES } from '../data/referenceSites';
 import { BODY_ACCENT, bodyLabel, buildRegionsCsv, dimLabel, pct, rankScore, regionsToMapSites, suitabilitySummary } from '../utils/mission';
 import { LeafletAnalogMap } from './LeafletAnalogMap';
-import { ReferenceEvidence } from './ReferenceEvidence';
+import { RegionCard } from './RegionCard';
 import { RegionDetail } from './RegionDetail';
 import { WeightTuner } from './WeightTuner';
 import { ErrorPanel, InfoNote, LoadingPanel, StateChip } from './StatusViews';
@@ -33,6 +35,30 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
   const [view, setView] = useState<'map' | 'globe'>('map');
 
   const sites = useMemo(() => (result ? regionsToMapSites(result.regions) : []), [result]);
+
+  const mapMarkers = useMemo(
+    () =>
+      !result
+        ? []
+        : sites.map((s) => ({
+        id: s.id,
+        name: s.region.replace(/\s*\([^)]*\)\s*$/, ''),
+        country: result.regions.find((x) => x.id === s.id)?.country ?? result.regions.find((x) => x.id === s.id)?.region_name ?? 'Land region',
+        lat: s.lat,
+        lon: s.lon,
+        score: s.overall_score,
+        coverage: s.data_coverage,
+        role: s.role,
+        published: true,
+        rank: result.regions.find((x) => x.id === s.id)?.rank,
+        status: result.regions.find((x) => x.id === s.id)?.suitability?.status,
+        explanation: (() => {
+          const rg = result.regions.find((x) => x.id === s.id);
+          return rg ? suitabilitySummary(rg) : undefined;
+        })(),
+                  })),
+    [result, sites]
+  );
 
   if (resultStatus === 'loading' && !result) {
     return <LoadingPanel message="Asking the ASTRANOVUS engine for the best Earth regions..." />;
@@ -77,13 +103,10 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
 
       {result.target_info.is_draft && (
         <InfoNote tone="warn">
-          <strong>Draft reference profile.</strong> The rules describing &ldquo;{result.target_info.name}&rdquo; are team-written from the literature and NASA
-          pages, not fitted to any dataset. Evidence status: <strong>{result.target_info.evidence.grounded} of {result.target_info.evidence.total}</strong> rules have a retrieved
-          source (qualitative direction only; no LOLA, MOLA, Diviner or CRISM values are used in scoring). Rankings are only as good as this profile.
+          <strong>Team-written reference profile.</strong> {result.target_info.evidence.grounded} of {result.target_info.evidence.total} rules for &ldquo;{result.target_info.name}&rdquo; have a
+          retrieved NASA source (qualitative direction only). Rankings are only as good as this profile.
         </InfoNote>
       )}
-
-      <ReferenceEvidence targetId={result.target_info.id} targetName={result.target_info.name} />
 
       {unavailable && (
         <div role="alert" className="bg-[#FFFFFF] border-2 border-[#B42318]/50 rounded-2xl p-6 space-y-4">
@@ -164,73 +187,33 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
 
       {result.regions.length > 0 && (
         <>
-          <InfoNote>
-            <strong>Spatial resolution:</strong> each marker is the centre of a {result.grid.step_deg ?? '?'}° grid cell (about 280 km wide); the dashed box on the map shows the selected cell.
-            Results are candidate <em>areas</em> for further study, not pinpointed test sites. Place names are approximate; regions group neighbouring cells within 15° of their best cell.
-            {(result.n_cells_excluded_unverified ?? 0) > 0 && (
-              <> {result.n_cells_excluded_unverified} cells were excluded because a required check for this experiment has no data there (for example ice-covered ground has no barren-ground value).</>
-            )}
-          </InfoNote>
+          <p className="text-xs text-[#68788F]">
+            Each marker is a {result.grid.step_deg ?? '?'}° grid cell (about 280 km): a candidate <em>area</em> to investigate, not a certified test site. Full warnings are listed at the end.
+          </p>
           <WeightTuner />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             <div className="lg:col-span-3 space-y-3 lg:max-h-[640px] lg:overflow-y-auto lg:pr-1" role="list" aria-label="Ranked Earth regions">
-              {result.regions.map((r) => {
-                const isSel = r.id === m.selectedRegionId;
-                const strong = r.dimensions.filter((d) => (d.similarity ?? 0) >= 0.7).slice(0, 3);
-                const miss = r.dimensions.filter((d) => d.similarity === null);
-                return (
-                  <div
-                    key={r.id}
-                    role="listitem"
-                    className="rounded-xl bg-[#FFFFFF] border transition-all"
-                    style={{ borderColor: isSel ? accent : '#E1E8F0', borderWidth: isSel ? 2 : 1 }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => m.selectRegion(r.id)}
-                      aria-pressed={isSel}
-                      className="w-full text-left p-4 space-y-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0B5ED7] rounded-xl"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[11px] font-semibold text-[#68788F]">Rank #{r.rank}</div>
-                          <div className="font-display font-bold text-sm text-[#142B50] leading-snug">{r.location_label}</div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-mono font-bold text-xl tabular-nums" style={{ color: accent }}>
-                            {rankScore(r).toFixed(1)}
-                          </div>
-                          <div className="text-[10px] text-[#68788F]">adjusted · raw {r.best_score.toFixed(1)}</div>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold">
-                        <span className={`px-2 py-0.5 rounded-full border ${CONF_STYLE[r.confidence]}`}>{r.confidence} confidence</span>
-                        <span className="px-2 py-0.5 rounded-full border border-[#E1E8F0] bg-[#F4F8FF] text-[#142B50]">coverage {pct(r.coverage)}</span>
-                        <span className="px-2 py-0.5 rounded-full border border-[#E1E8F0] bg-[#F4F8FF] text-[#142B50]">{r.n_cells} cells</span>
-                      </div>
-                      <div className="text-[11px] text-[#68788F] leading-snug">
-                        {strong.length > 0 && (
-                          <span>
-                            <strong className="text-[#177A3C]">Strong:</strong> {strong.map((d) => d.name).join(', ')}.{' '}
-                          </span>
-                        )}
-                        {miss.length > 0 && (
-                          <span>
-                            <strong className="text-[#B42318]">Not assessed:</strong> {miss.map((d) => d.name).join(', ')}.
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                    <label className="flex items-center gap-2 px-4 pb-3 text-[11px] text-[#68788F] cursor-pointer">
-                      <input type="checkbox" checked={m.compareIds.includes(r.id)} onChange={() => m.toggleCompare(r.id)} className="accent-[#0B5ED7]" />
-                      Add to comparison
-                    </label>
-                  </div>
-                );
-              })}
+              {result.regions.map((r) => (
+                <RegionCard
+                  key={r.id}
+                  region={r}
+                  accent={accent}
+                  selected={r.id === m.selectedRegionId}
+                  inCompare={m.compareIds.includes(r.id)}
+                  onSelect={() => {
+                    m.selectRegion(r.id);
+                    if (window.innerWidth < 1024) document.getElementById('results-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  onDetails={() => {
+                    m.selectRegion(r.id);
+                    window.setTimeout(() => document.getElementById('region-detail')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                  }}
+                  onToggleCompare={() => m.toggleCompare(r.id)}
+                />
+              ))}
             </div>
 
-            <div className="lg:col-span-6 space-y-3">
+            <div id="results-map" className="lg:col-span-6 space-y-3 scroll-mt-24">
               <div role="group" aria-label="Map view" className="inline-flex glass-light-hud rounded-lg p-0.5">
                 {(
                   [
@@ -253,22 +236,17 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
               </div>
               {view === 'map' ? (
                 <LeafletAnalogMap
-                  markers={sites.map((s) => ({
-                    id: s.id,
-                    name: s.region,
-                    country: s.country || 'Recommended region',
-                    lat: s.lat,
-                    lon: s.lon,
-                    score: s.overall_score,
-                    coverage: s.data_coverage,
-                    role: s.role,
-                    published: false,
-                  }))}
+                  markers={mapMarkers}
+                  referenceSites={REFERENCE_SITES}
+                  onOpenProfile={(id) => {
+                    m.selectRegion(id);
+                    onOpenProfile();
+                  }}
                   selectedId={m.selectedRegionId}
                   onSelectMarker={m.selectRegion}
                   cellSizeDeg={result.grid.step_deg ?? undefined}
                   bodyTheme={bodyLabel(body)}
-                  heightClass="h-[420px] lg:h-[560px]"
+                  heightClass="h-[540px] lg:h-[560px]"
                 />
               ) : (
                 <Suspense fallback={<LoadingPanel message="Loading 3D globe..." />}>
@@ -290,7 +268,8 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
             <aside className="lg:col-span-3" aria-label="Selected region summary">
               {selected && (
                 <div className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl overflow-hidden shadow-xs">
-                  <div className="h-24" style={{ background: `linear-gradient(135deg, ${accent}, #142B50)` }} aria-hidden="true" />
+                  <img src={pickRegionPhoto(selected).src} alt={`Representative landscape: ${pickRegionPhoto(selected).title}`} loading="lazy" className="h-28 w-full object-cover" />
+                  <div className="px-4 pt-1 text-[9px] text-[#68788F]">Representative image · {pickRegionPhoto(selected).credit.author}, {pickRegionPhoto(selected).credit.license}</div>
                   <div className="p-4 space-y-3">
                     <div className="text-[11px] text-[#68788F]">
                       Rank #{selected.rank} · {selected.region_name ?? 'Land region'}
@@ -331,6 +310,31 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
               onOpenProfile={onOpenProfile}
             />
           )}
+
+          <section aria-label="Warnings and limitations" className="rounded-2xl border border-[#A15C00]/30 bg-[#FFF8EC] p-5 space-y-2">
+            <h3 className="font-display font-bold text-sm text-[#6B3F00]">Warnings and limitations</h3>
+            <ul className="list-disc pl-5 text-xs text-[#6B3F00] space-y-1">
+              <li>
+                <strong>Regions, not sites.</strong> Markers are {result.grid.step_deg ?? '?'}° grid cells (about 280 km). They are areas to investigate, not certified landing or field-test sites; place names are approximate.
+              </li>
+              <li>
+                <strong>Geology is not measured</strong> for most targets (lava tubes, mare basalt, mud volcanoes, delta sediments, evaporites, dunes). Those results are climate, terrain and surface similarity only.
+              </li>
+              <li>
+                <strong>Proxies and gaps.</strong> Snow cover is not ice, composition is a thermal-infrared proxy defined for bare ground only, terrain is 1 km relief. Missing data are never filled.
+              </li>
+              {(result.n_cells_excluded_unverified ?? 0) > 0 && (
+                <li>{result.n_cells_excluded_unverified} cells were excluded because a required check has no data there (for example ice-covered ground has no barren-ground value).</li>
+              )}
+              <li>
+                <strong>Earth cannot reproduce</strong> lunar or Martian gravity, vacuum or thin atmosphere, radiation and regolith chemistry.
+              </li>
+              <li>
+                <strong>Benchmark note.</strong> On the current validation benchmark a simple dry-and-barren score performs as well as this full model; rankings are screening aids, not proof of suitability. See Methodology.
+              </li>
+              <li>Photographs are representative of an environment type, not of the exact recommended location.</li>
+            </ul>
+          </section>
         </>
       )}
     </div>

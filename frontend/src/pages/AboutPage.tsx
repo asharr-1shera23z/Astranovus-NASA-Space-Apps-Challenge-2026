@@ -1,3 +1,4 @@
+import { AstranovusLogo } from '../components/AstranovusLogo';
 import { MEDIA } from '../assets/media';
 
 export function AboutPage() {
@@ -19,9 +20,9 @@ export function AboutPage() {
             </p>
           </div>
           <div className="lg:col-span-4 flex justify-center lg:justify-end">
-            <div className="bg-[#0B0E17]/85 rounded-2xl p-4 border border-[#FFFFFF]/25 max-w-[230px] w-full flex flex-col items-center">
-              <img src={MEDIA.brandEmblem} alt="ASTRANOVUS Team Astravant emblem" className="w-40 h-40 object-contain" />
-              <div className="text-[11px] text-[#C7D2E0] mt-1">ASTRANOVUS · Team Astravant</div>
+            <div className="bg-[#000000] rounded-2xl p-4 border border-[#FFFFFF]/25 max-w-[230px] w-full flex flex-col items-center">
+              <AstranovusLogo variant="full" className="w-full h-auto" />
+              <div className="text-[11px] text-[#C7D2E0] mt-1">Team Astravant</div>
             </div>
           </div>
         </div>

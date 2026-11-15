@@ -110,6 +110,8 @@
   margin: 0;
 }
 
+.an-popup .leaflet-popup-content-wrapper { overflow: hidden; }
+
 .leaflet-popup-tip {
   background: #FFFFFF;
   border: 1px solid #E1E8F0;
@@ -178,4 +180,32 @@ input[type="range"].astranovus-slider::-moz-range-thumb {
   border: 2px solid #FFFFFF;
   box-shadow: 0 1px 4px rgba(11, 94, 215, 0.35);
   cursor: pointer;
+}
+
+
+/* ---- Motion: subtle, purposeful, and fully disabled for users who prefer reduced motion ---- */
+@keyframes an-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes an-orbit {
+  to { transform: rotate(360deg); }
+}
+@keyframes an-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(84, 185, 245, 0.35); }
+  50% { box-shadow: 0 0 0 7px rgba(84, 185, 245, 0); }
+}
+.an-rise { animation: an-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.an-rise-1 { animation-delay: 0.08s; }
+.an-rise-2 { animation-delay: 0.16s; }
+.an-rise-3 { animation-delay: 0.24s; }
+.an-orbit-slow { animation: an-orbit 150s linear infinite; }
+.an-orbit-rev { animation: an-orbit 220s linear infinite reverse; }
+.an-pulse { animation: an-pulse 2.6s ease-out infinite; }
+.an-card { transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, border-color 0.2s ease; }
+.an-card:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(11, 94, 215, 0.12); }
+@media (prefers-reduced-motion: reduce) {
+  .an-rise, .an-orbit-slow, .an-orbit-rev, .an-pulse { animation: none !important; }
+  .an-card, .an-card:hover { transition: none; transform: none; }
+  html { scroll-behavior: auto; }
 }

@@ -2,6 +2,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Globe, Layers, Minus, Plus, RotateCcw } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import type { ReferenceSite } from '../data/referenceSites';
 import type { HeatmapPoint } from '../types/astranovus';
 import {
   BASEMAP_CONFIGS,
@@ -9,7 +10,6 @@ import {
   type BasemapStyleId,
   escapeHtml,
   formatCursorTelemetry,
-  getMarkerStyle,
 } from '../utils/leafletMapUtils';
 
 export interface MapMarkerItem {
@@ -22,6 +22,10 @@ export interface MapMarkerItem {
   coverage: number;
   role: string;
   published?: boolean;
+  rank?: number;
+  /** Real values from the API, shown in the popup. */
+  status?: string;
+  explanation?: string;
 }
 
 interface LeafletAnalogMapProps {
@@ -31,6 +35,8 @@ interface LeafletAnalogMapProps {
   onOpenProfile?: (id: string) => void;
   heatmapPoints?: HeatmapPoint[];
   heatmapOpacity?: number;
+  /** Literature-documented analog sites and research hypotheses, drawn as a separate, clearly labelled layer (not model output). */
+  referenceSites?: ReferenceSite[];
   /** If set, the selected marker is drawn with its true grid-cell footprint (degrees) to show spatial uncertainty. */
   cellSizeDeg?: number;
   bodyTheme: 'Moon' | 'Mars';
@@ -44,6 +50,7 @@ export function LeafletAnalogMap({
   onOpenProfile,
   heatmapPoints = [],
   heatmapOpacity = 0.65,
+  referenceSites = [],
   cellSizeDeg,
   bodyTheme,
   heightClass = 'h-[480px]',
@@ -55,11 +62,15 @@ export function LeafletAnalogMap({
   const heatmapLayerRef = useRef<L.LayerGroup | null>(null);
   const solarZonesLayerRef = useRef<L.LayerGroup | null>(null);
   const footprintLayerRef = useRef<L.LayerGroup | null>(null);
+  const refLayerRef = useRef<L.LayerGroup | null>(null);
   const prevSelectedRef = useRef<string | null>(null);
+  const markerByIdRef = useRef<Map<string, L.Marker>>(new Map());
 
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lon: number } | null>(null);
   const [showSolarZones, setShowSolarZones] = useState<boolean>(false);
   const [basemapStyle, setBasemapStyle] = useState<BasemapStyleId>('street');
+  const [showRef, setShowRef] = useState<boolean>(true);
+  const [legendOpen, setLegendOpen] = useState<boolean>(false);
 
   const onSelectRef = useRef(onSelectMarker);
   const onOpenProfileRef = useRef(onOpenProfile);
@@ -87,6 +98,7 @@ export function LeafletAnalogMap({
     solarZonesLayerRef.current = L.layerGroup().addTo(map);
     heatmapLayerRef.current = L.layerGroup().addTo(map);
     footprintLayerRef.current = L.layerGroup().addTo(map);
+    refLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
@@ -231,63 +243,122 @@ export function LeafletAnalogMap({
     }
   }, [heatmapPoints, heatmapOpacity, bodyTheme]);
 
-  // Render site markers & pan crisply (no flashy animation) when selection changes
+  // Ranked, numbered markers for the model-recommended grid regions; the map flies to a newly selected region.
   useEffect(() => {
     const layer = markersLayerRef.current;
     if (!layer) return;
+    const reopenId = selectedId && prevSelectedRef.current === selectedId && markerByIdRef.current.get(selectedId)?.isPopupOpen() ? selectedId : null;
     layer.clearLayers();
+    markerByIdRef.current = new Map();
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     for (const m of markers) {
       const isSelected = m.id === selectedId;
-      const marker = L.circleMarker([m.lat, m.lon], getMarkerStyle(m.score, isSelected, bodyTheme));
-
-      marker.bindTooltip(`${m.name} (${m.score.toFixed(1)}%)`, {
-        direction: 'top',
-        offset: [0, -8],
+      const fill = m.role === 'hypothesis' ? '#A15C00' : m.role === 'analog' ? '#142B50' : m.score >= 80 ? '#0EA5E9' : bodyTheme === 'Mars' ? '#F28B45' : '#475569';
+      const glyph = m.rank ?? (m.role === 'analog' ? 'A' : m.role === 'hypothesis' ? 'H' : '');
+      const size = isSelected ? 36 : 28;
+      const icon = L.divIcon({
+        className: '',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        popupAnchor: [0, -size / 2],
+        html: `<div class="${isSelected ? 'an-pulse' : ''}" style="width:${size}px;height:${size}px;border-radius:50%;background:${fill};border:${isSelected ? 3 : 2}px solid ${isSelected ? '#142B50' : '#FFFFFF'};box-shadow:0 2px 8px rgba(20,43,80,.45);color:#FFFFFF;font:700 ${isSelected ? 13 : 11}px Montserrat,sans-serif;display:flex;align-items:center;justify-content:center;">${glyph}</div>`,
       });
+      const marker = L.marker([m.lat, m.lon], { icon, title: m.name, keyboard: true, zIndexOffset: isSelected ? 1000 : 0 });
 
+      marker.bindTooltip(`${m.rank ? `#${m.rank} ` : ''}${m.name} · score ${m.score.toFixed(1)}`, { direction: 'top', offset: [0, -size / 2] });
+
+      const fmtC = `${Math.abs(m.lat).toFixed(2)}°${m.lat >= 0 ? 'N' : 'S'}, ${Math.abs(m.lon).toFixed(2)}°${m.lon >= 0 ? 'E' : 'W'}`;
+      const stat = m.status ?? '';
+      const statCol = /Supported/.test(stat) ? ['#EAF7EE', '#177A3C'] : /Insufficient/.test(stat) ? ['#FDECEC', '#B42318'] : /Geolog/.test(stat) ? ['#FFF4E5', '#A15C00'] : ['#EAF2FF', '#0B5ED7'];
       const popupEl = document.createElement('div');
-      popupEl.className = 'p-3 min-w-[215px] font-sans';
+      popupEl.style.cssText = 'font-family:Inter,system-ui,sans-serif;width:100%;';
       popupEl.innerHTML = `
-        <div style="font-size:11px;color:#68788F;margin-bottom:2px;">${escapeHtml(m.country)} · ${escapeHtml(m.role.replace('_', ' '))}</div>
-        <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#142B50;margin-bottom:6px;">${escapeHtml(m.name)}</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-bottom:8px;">
-          <span style="color:#68788F;">Similarity:</span>
-          <strong style="color:#0B5ED7;font-family:JetBrains Mono,monospace;">${m.score.toFixed(1)}%</strong>
+        <div style="background:linear-gradient(135deg,${fill},#142B50);color:#fff;padding:10px 14px;border-radius:12px 12px 0 0;">
+          <div style="font-size:10px;opacity:.85;">${m.rank ? `Rank #${m.rank} · ` : ''}${escapeHtml(m.country)}</div>
+          <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;line-height:1.25;margin-top:1px;">${escapeHtml(m.name)}</div>
+        </div>
+        <div style="padding:10px 14px 12px;">
+          <div style="font-family:JetBrains Mono,monospace;font-size:11px;color:#68788F;margin-bottom:8px;">${fmtC}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="background:#EDF3FA;border-radius:8px;padding:6px 8px;"><div style="font-size:10px;color:#68788F;">Similarity score</div><div style="font-family:JetBrains Mono,monospace;font-weight:700;font-size:16px;color:#0B5ED7;">${m.score.toFixed(1)}</div></div>
+            <div style="background:#EDF3FA;border-radius:8px;padding:6px 8px;"><div style="font-size:10px;color:#68788F;">Data coverage</div><div style="font-family:JetBrains Mono,monospace;font-weight:700;font-size:16px;color:#142B50;">${Math.round(m.coverage)}%</div></div>
+          </div>
+          ${stat ? `<div style="display:inline-block;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:${statCol[0]};color:${statCol[1]};margin-bottom:6px;">${escapeHtml(stat)}</div>` : ''}
+          ${m.explanation ? `<div style="font-size:11px;color:#142B50;line-height:1.4;margin-bottom:6px;">${escapeHtml(m.explanation)}</div>` : ''}
+          <div style="font-size:10px;color:#68788F;line-height:1.35;margin-bottom:8px;">Centre of an approximate 2.5° (~280 km) cell: an area to investigate, not a certified site.</div>
         </div>
       `;
-
       if (m.published !== false && onOpenProfileRef.current) {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.textContent = 'View Profile →';
-        btn.style.cssText =
-          'width:100%;padding:6px 10px;background:#0B5ED7;color:#FFFFFF;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;';
+        btn.textContent = 'View Full Profile →';
+        btn.style.cssText = 'display:block;width:calc(100% - 28px);margin:0 14px 14px;padding:8px 10px;background:#0B5ED7;color:#FFFFFF;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;';
         btn.onclick = () => onOpenProfileRef.current?.(m.id);
         popupEl.appendChild(btn);
       }
-
-      marker.bindPopup(popupEl);
-      marker.on('click', () => {
-        onSelectRef.current(m.id);
-      });
-
+      const maxW = Math.min(300, Math.max(220, window.innerWidth - 56));
+      marker.bindPopup(popupEl, { maxWidth: maxW, minWidth: Math.min(250, maxW), autoPan: true, keepInView: true, autoPanPaddingTopLeft: [16, 64], autoPanPaddingBottomRight: [16, 16], className: 'an-popup' });
+      marker.on('click', () => onSelectRef.current(m.id));
       marker.addTo(layer);
+      markerByIdRef.current.set(m.id, marker);
     }
 
-    if (
-      selectedId &&
-      prevSelectedRef.current !== null &&
-      prevSelectedRef.current !== selectedId &&
-      mapRef.current
-    ) {
-      const targetMarker = markers.find((m) => m.id === selectedId);
-      if (targetMarker) {
-        mapRef.current.panTo([targetMarker.lat, targetMarker.lon], { animate: false });
+    if (selectedId && prevSelectedRef.current !== null && prevSelectedRef.current !== selectedId && mapRef.current) {
+      const t = markers.find((m) => m.id === selectedId);
+      if (t) {
+        const zoom = Math.max(mapRef.current.getZoom(), 4);
+        const mk = markerByIdRef.current.get(t.id);
+        // open the location's popup right on the map once the view has moved there
+        if (reduceMotion) {
+          mapRef.current.setView([t.lat, t.lon], zoom, { animate: false });
+          mk?.openPopup();
+        } else {
+          const openIt = () => {
+            if (mk && !mk.isPopupOpen()) mk.openPopup();
+          };
+          mapRef.current.once('moveend', openIt);
+          window.setTimeout(openIt, 1300);
+          mapRef.current.flyTo([t.lat, t.lon], zoom, { duration: 0.9 });
+        }
       }
     }
+    if (reopenId) markerByIdRef.current.get(reopenId)?.openPopup();
     prevSelectedRef.current = selectedId;
   }, [markers, selectedId, bodyTheme]);
+
+  // Documented analog sites and research hypotheses: a separate layer, never mixed up with model output.
+  useEffect(() => {
+    const layer = refLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+    if (!showRef) return;
+    const LABEL = { documented: 'Documented analog site', incomplete: 'Documented, evidence incomplete', hypothesis: 'Research hypothesis (unverified)' } as const;
+    for (const r of referenceSites) {
+      const common = 'transform:rotate(45deg);width:13px;height:13px;box-sizing:border-box;';
+      const html =
+        r.kind === 'documented'
+          ? `<div style="${common}background:#142B50;border:2px solid #FFFFFF;box-shadow:0 1px 5px rgba(20,43,80,.5);"></div>`
+          : r.kind === 'incomplete'
+          ? `<div style="${common}background:#FFFFFF;border:2px solid #A15C00;box-shadow:0 1px 5px rgba(20,43,80,.35);"></div>`
+          : `<div style="width:15px;height:15px;box-sizing:border-box;border-radius:50%;border:2px dashed #A15C00;background:rgba(255,244,229,.9);"></div>`;
+      const icon = L.divIcon({ className: '', html, iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -8] });
+      const mk = L.marker([r.lat, r.lon], { icon, title: r.name, keyboard: true, zIndexOffset: -500 });
+      mk.bindTooltip(`${r.name} · ${LABEL[r.kind]}`, { direction: 'top', offset: [0, -8] });
+      const el = document.createElement('div');
+      el.className = 'p-3 min-w-[220px] max-w-[260px] font-sans';
+      el.innerHTML = `
+        <div style="font-size:11px;color:#68788F;margin-bottom:2px;">${escapeHtml(r.country)} · ${escapeHtml(LABEL[r.kind])}</div>
+        <div style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#142B50;margin-bottom:6px;">${escapeHtml(r.name)}</div>
+        ${r.targets.length ? `<div style="font-size:11px;color:#142B50;margin-bottom:4px;">Analog for: ${escapeHtml(r.targets.join(', ').replace(/_/g, ' '))}</div>` : ''}
+        <div style="font-size:11px;color:#68788F;margin-bottom:6px;line-height:1.35;">${escapeHtml(r.note)}.</div>
+        <div style="font-size:10px;color:#6B3F00;background:#FFF4E5;border-radius:6px;padding:4px 6px;line-height:1.35;">Shown for context from the literature or team research. Not scored by the engine; coordinates approximate.</div>
+        ${r.source ? `<a href="${escapeHtml(r.source)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:6px;font-size:11px;color:#0B5ED7;">Source</a>` : ''}
+      `;
+      mk.bindPopup(el);
+      mk.addTo(layer);
+    }
+  }, [referenceSites, showRef]);
 
   // Footprint of the selected grid cell: the marker is a cell centre, not a point-sized site.
   useEffect(() => {
@@ -398,29 +469,44 @@ export function LeafletAnalogMap({
         </button>
       </div>
 
-      {/* Clean Frosted Glass Map Score Legend Card */}
-      <div className="absolute bottom-3 left-3 z-[400] glass-light-hud rounded-xl px-3.5 py-2.5 text-xs space-y-1.5">
-        <div className="font-semibold text-[#142B50]">Map Legend</div>
-        <div className="flex items-center gap-2 text-[#68788F]">
-          <span className="w-3 h-3 rounded-full bg-[#0B5ED7] ring-2 ring-[#142B50]" />
-          <span>Selected Location</span>
-        </div>
-        <div className="flex items-center gap-2 text-[#68788F]">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0EA5E9]" />
-          <span>High Match (≥ 80%)</span>
-        </div>
-        <div className="flex items-center gap-2 text-[#68788F]">
-          <span
-            className={`w-2.5 h-2.5 rounded-full ${
-              bodyTheme === 'Mars' ? 'bg-[#F28B45]' : 'bg-[#475569]'
-            }`}
-          />
-          <span>Moderate Match (&lt; 80%)</span>
-        </div>
-        {showSolarZones && (
-          <div className="pt-1 border-t border-[#E6ECF3] text-[10px] text-[#0B5ED7] font-medium">
-            Cyan: Polar ≥66.5° · Amber: 30°–60° Belt
-          </div>
+      {/* Legend (collapsible so it never hides the map) */}
+      <div className="absolute bottom-3 left-3 z-[400] glass-light-hud rounded-xl px-3 py-2 text-[11px] space-y-1.5 max-w-[230px]">
+        <button type="button" onClick={() => setLegendOpen((v) => !v)} aria-expanded={legendOpen} className="flex w-full items-center justify-between gap-3 font-semibold text-[#142B50] text-xs">
+          <span>Legend</span>
+          <span className="text-[10px] text-[#0B5ED7]">{legendOpen ? 'Hide' : 'Show'}</span>
+        </button>
+        {legendOpen && (
+          <>
+            <div className="flex items-center gap-2 text-[#142B50]">
+              <span className="w-4 h-4 shrink-0 rounded-full bg-[#0EA5E9] border-2 border-[#FFFFFF] shadow text-[8px] font-bold text-[#FFFFFF] flex items-center justify-center">1</span>
+              <span>Recommended region (rank)</span>
+            </div>
+            <div className="flex items-center gap-2 text-[#68788F]">
+              <span className="w-4 h-4 shrink-0 rounded-full bg-[#0B5ED7] ring-2 ring-[#142B50]" />
+              <span>Selected · dashed box = cell (~280 km)</span>
+            </div>
+            {referenceSites.length > 0 && (
+              <div className="pt-1.5 border-t border-[#E6ECF3] space-y-1">
+                <label className="flex items-center gap-1.5 font-semibold text-[#142B50] cursor-pointer">
+                  <input type="checkbox" checked={showRef} onChange={(e) => setShowRef(e.target.checked)} className="accent-[#0B5ED7]" />
+                  Documented analog sites
+                </label>
+                <div className="flex items-center gap-2 text-[#68788F]">
+                  <span className="w-2.5 h-2.5 shrink-0 rotate-45 bg-[#142B50] border border-[#FFFFFF]" />
+                  <span>Literature-documented</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#68788F]">
+                  <span className="w-2.5 h-2.5 shrink-0 rotate-45 bg-[#FFFFFF] border-2 border-[#A15C00]" />
+                  <span>Evidence incomplete</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#68788F]">
+                  <span className="w-3 h-3 shrink-0 rounded-full border-2 border-dashed border-[#A15C00] bg-[#FFF4E5]" />
+                  <span>Research hypothesis (unverified)</span>
+                </div>
+              </div>
+            )}
+            {showSolarZones && <div className="pt-1 border-t border-[#E6ECF3] text-[10px] text-[#0B5ED7] font-medium">Cyan: polar ≥66.5° · Amber: 30°–60° belt</div>}
+          </>
         )}
       </div>
     </div>
