@@ -2,9 +2,10 @@ import { Download, Globe2, Map as MapIcon } from 'lucide-react';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useMission } from '../state/MissionContext';
 import type { Region } from '../types/astranovus';
-import { BODY_ACCENT, bodyLabel, buildRegionsCsv, dimLabel, pct, regionsToMapSites } from '../utils/mission';
+import { BODY_ACCENT, bodyLabel, buildRegionsCsv, dimLabel, pct, regionsToMapSites, suitabilitySummary } from '../utils/mission';
 import { LeafletAnalogMap } from './LeafletAnalogMap';
 import { RegionDetail } from './RegionDetail';
+import { WeightTuner } from './WeightTuner';
 import { ErrorPanel, InfoNote, LoadingPanel, StateChip } from './StatusViews';
 
 const EarthAnalogGlobe = lazy(() => import('./EarthAnalogGlobe').then((m) => ({ default: m.EarthAnalogGlobe })));
@@ -125,6 +126,12 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
         </div>
       )}
 
+      {Object.keys(result.custom_weights ?? {}).length > 0 && (
+        <InfoNote tone="warn">
+          <strong>Custom weights active:</strong> {Object.entries(result.custom_weights).map(([k, v]) => `${dimLabel(k)} ×${v}`).join(', ')}. This is your own calibration, not the default experiment profile.
+        </InfoNote>
+      )}
+
       {result.provisional && (
         <InfoNote tone="danger">
           <strong>PROVISIONAL, UNVERIFIED.</strong> Required checks cannot be performed because their data is missing:{' '}
@@ -153,8 +160,9 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
 
       {result.regions.length > 0 && (
         <>
+          <WeightTuner />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-            <div className="lg:col-span-5 space-y-3 lg:max-h-[640px] lg:overflow-y-auto lg:pr-1" role="list" aria-label="Ranked Earth regions">
+            <div className="lg:col-span-3 space-y-3 lg:max-h-[640px] lg:overflow-y-auto lg:pr-1" role="list" aria-label="Ranked Earth regions">
               {result.regions.map((r) => {
                 const isSel = r.id === m.selectedRegionId;
                 const strong = r.dimensions.filter((d) => (d.similarity ?? 0) >= 0.7).slice(0, 3);
@@ -211,7 +219,7 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
               })}
             </div>
 
-            <div className="lg:col-span-7 space-y-3">
+            <div className="lg:col-span-6 space-y-3">
               <div role="group" aria-label="Map view" className="inline-flex glass-light-hud rounded-lg p-0.5">
                 {(
                   [
@@ -266,6 +274,40 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
                 </Suspense>
               )}
             </div>
+
+            <aside className="lg:col-span-3" aria-label="Selected region summary">
+              {selected && (
+                <div className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl overflow-hidden shadow-xs">
+                  <div className="h-24" style={{ background: `linear-gradient(135deg, ${accent}, #142B50)` }} aria-hidden="true" />
+                  <div className="p-4 space-y-3">
+                    <div className="text-[11px] text-[#68788F]">
+                      Rank #{selected.rank} · {selected.region_name ?? 'Land region'}
+                    </div>
+                    <h3 className="font-display font-bold text-base text-[#142B50] leading-snug">{selected.location_label}</h3>
+                    <div className="grid grid-cols-2 gap-2 bg-[#EDF3FA] rounded-xl p-3 text-xs">
+                      <div>
+                        <div className="text-[10px] text-[#68788F]">Similarity</div>
+                        <div className="font-mono font-bold text-lg tabular-nums" style={{ color: accent }}>
+                          {selected.best_score.toFixed(1)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-[#68788F]">Data coverage</div>
+                        <div className="font-mono font-bold text-lg tabular-nums text-[#142B50]">{pct(selected.coverage)}</div>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-[#68788F] leading-relaxed">{suitabilitySummary(selected)}</p>
+                    <button
+                      type="button"
+                      onClick={onOpenProfile}
+                      className="w-full py-2.5 rounded-lg bg-[#0B5ED7] hover:bg-[#094DB3] text-[#FFFFFF] text-sm font-semibold"
+                    >
+                      View Profile →
+                    </button>
+                  </div>
+                </div>
+              )}
+            </aside>
           </div>
 
           {selected && (

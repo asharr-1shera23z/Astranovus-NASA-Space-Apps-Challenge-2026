@@ -1,6 +1,6 @@
 # Deployment (prepared, nothing published)
 
-**Recommended:** frontend on **Vercel** (static Vite build) and backend on **Render** (Docker web service). The API is small (pandas + 629-row grid),
+**Recommended:** frontend on **Vercel** (static Vite build) and backend on **Render** (Docker web service). The API is small (pandas + 3,435-row grid),
 so Render's free/starter tier is enough. Nothing has been deployed; connecting accounts is up to you.
 
 ## Backend (Render)

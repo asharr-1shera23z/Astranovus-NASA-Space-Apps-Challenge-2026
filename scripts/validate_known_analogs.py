@@ -109,7 +109,7 @@ def main():
     L.append(f"- Grid: {meta['grid']['cells']} cells, {meta['grid']['step_deg']} deg spacing, lat {meta['grid']['lat_range'][0]} to {meta['grid']['lat_range'][1]}.")
     L.append(f"- Dimensions with data: {', '.join(d for d, v in meta['coverage_by_dimension'].items() if v > 0)}. Missing: {', '.join(d for d, v in meta['coverage_by_dimension'].items() if v == 0)}.")
     L.append(f"- Temporal coverage of MODIS/GPM-derived dimensions: {', '.join(meta['temporal_coverage']['MODIS_GPM_months'])} .")
-    L.append("- Each site is evaluated at its nearest 5-degree cell (far coarser than the site) using generic target weights (no mission profile).")
+    L.append("- Each site is evaluated at its nearest grid cell (2.5 degrees) (far coarser than the site) using generic target weights (no mission profile).")
     L.append("- Metric: percentile of the site's score among all scored cells for the mapped target; AUC against 6 control regions.")
     L.append("- No rule or weight was tuned on these sites. Positives were split into `tuning` and `heldout` (alternating by id); the headline uses `heldout` only.")
     L.append("- Target-to-site mapping is an ASTRANOVUS judgement. Controls are poor analogs by construction (no citation).\n")
@@ -133,7 +133,7 @@ def main():
     for e in ka["_meta"]["excluded_unverified"]:
         L.append(f"- {e['name']}: {e['reason']}")
     L.append("\n## Interpretation and limits\n")
-    L.append("- Terrain (D4) and rock (D5) are missing, so volcanic and rugged analogs (lava tubes, rover terrain) cannot be distinguished by the dimensions that define them; poor scores there reflect missing data, not necessarily a poor analog.")
+    L.append("- Rock (D5) is missing and terrain (D4) is only 1-km relief (absent south of 60S), so volcanic and lava-tube analogs cannot be separated by the dimensions that define them; their weaker scores reflect missing data, not necessarily a poor analog.")
     L.append("- Low-latitude desert targets are driven by dryness and barrenness; polar targets by cold and the snow proxy.")
     L.append("- Anything below the control median for its target should be investigated before claiming the method works for that target.")
     json.dump({"grid_built_utc": meta["built_utc"], "heldout": held, "tuning": tune, "all": allp,

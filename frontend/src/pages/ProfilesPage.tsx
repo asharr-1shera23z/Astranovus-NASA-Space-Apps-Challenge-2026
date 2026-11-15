@@ -52,7 +52,11 @@ export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }
 
   const body = result.experiment.body;
   const accent = BODY_ACCENT[body];
-  const radar = dimsWithData(r.dimensions).map((d) => ({ dimension: d.name, match: Math.round((d.similarity ?? 0) * 100) }));
+  const radar = dimsWithData(r.dimensions).map((d) => ({ dimension: d.name, match: Math.round((d.similarity ?? 0) * 100), ideal: 100 }));
+  const key = new Set(m.experiment.key_dimensions);
+  const checks = r.dimensions
+    .filter((d) => key.has(d.dimension) || m.experiment!.purpose.gates.some((g) => g.dim === d.dimension))
+    .map((d) => ({ d, status: d.similarity === null ? 'missing' : d.similarity >= 0.7 ? 'pass' : 'caution' }));
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-8 py-8 space-y-6">
@@ -119,6 +123,7 @@ export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }
                   <PolarGrid stroke="#E1E8F0" />
                   <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 11, fill: '#142B50', fontWeight: 600 }} />
                   <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#68788F' }} />
+                  <Radar name="Reference ideal" dataKey="ideal" stroke="#C7D2E0" fill="#EDF3FA" fillOpacity={0.35} strokeDasharray="4 4" />
                   <Radar name="Match %" dataKey="match" stroke={accent} fill={accent} fillOpacity={0.28} />
                   <Tooltip formatter={(v: unknown) => [`${Number(v)}%`, 'Match']} contentStyle={{ borderRadius: 10, borderColor: '#E1E8F0', fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -139,6 +144,22 @@ export function ProfilesPage({ onNavigate }: { onNavigate: (p: PageId) => void }
       <section className="space-y-2">
         <h2 className="font-display font-bold text-base text-[#142B50]">Dimension breakdown for {m.experiment.short_name}</h2>
         <DimensionTable dims={r.dimensions} accent={accent} />
+      </section>
+
+      <section className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-6 space-y-3">
+        <h2 className="font-display font-bold text-base text-[#142B50]">Experiment suitability checklist</h2>
+        <p className="text-xs text-[#68788F]">
+          The dimensions that matter most for <strong>{m.experiment.short_name}</strong> (from its mission profile), judged from engine similarity: pass ≥ 70%, caution below.
+          This is a desk assessment from satellite-derived percentiles, not a field-readiness check.
+        </p>
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {checks.map(({ d, status }) => (
+            <li key={d.dimension} className={`rounded-lg border px-3 py-2 text-xs ${status === 'pass' ? 'bg-[#EAF7EE] border-[#177A3C]/25 text-[#177A3C]' : status === 'caution' ? 'bg-[#FFF4E5] border-[#A15C00]/30 text-[#6B3F00]' : 'bg-[#FDECEC] border-[#B42318]/25 text-[#7A1A12]'}`}>
+              <div className="flex justify-between font-semibold"><span>{d.name}</span><span className="font-mono">{d.similarity === null ? 'no data' : pct(d.similarity)}</span></div>
+              <div className="opacity-90">{status === 'pass' ? 'Supports this experiment.' : status === 'caution' ? 'Only a partial match: expect differences from the reference environment.' : 'Cannot be assessed yet.'}</div>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-6 space-y-3">

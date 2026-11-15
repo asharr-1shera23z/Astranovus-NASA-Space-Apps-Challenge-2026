@@ -32,7 +32,7 @@ export function RegionDetail({ region: r, result, inCompare, onToggleCompare, on
           <h2 className="font-display font-bold text-xl text-[#142B50]">{r.location_label}</h2>
           <p className="text-[11px] text-[#68788F]">
             Location name is an approximate label ({r.label_basis}); the engine itself works on grid cells, not named places.
-            The marker is this region's highest-scoring 5° cell; the region joins {r.n_cells} neighbouring top-scoring cell{r.n_cells === 1 ? '' : 's'}{r.n_cells > 10 ? ' and is a wide belt, so conditions vary across it' : ''}.
+            The marker is this region's highest-scoring grid cell (2.5°); the region joins {r.n_cells} neighbouring top-scoring cell{r.n_cells === 1 ? '' : 's'}{r.n_cells > 10 ? ' and is a wide belt, so conditions vary across it' : ''}.
           </p>
           <p className="text-sm text-[#142B50] leading-relaxed">{suitabilitySummary(r)}</p>
           <div className="flex flex-wrap gap-2 pt-1">
@@ -147,7 +147,7 @@ export function RegionDetail({ region: r, result, inCompare, onToggleCompare, on
             <p className={`text-xs rounded-lg px-3 py-2 ${r.terrain.state === 'outside_coverage' ? 'bg-[#FDECEC] text-[#7A1A12]' : 'bg-[#F4F8FF] text-[#68788F]'}`}>{r.terrain.note}</p>
           )}
           <p className="text-[11px] text-[#68788F]">
-            Statistics describe the 1°×1° SRTM tile around the cell centre, not the whole 5° cell, and are not part of the similarity score (terrain is still missing from the Earth grid).
+            Finer 30 m check on the 1°×1° SRTM tile around the cell centre, not the whole cell. It is a verification aid and is not used in the score; the score's terrain dimension uses coarser 1 km relief for the whole cell.
           </p>
         </div>
 

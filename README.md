@@ -51,13 +51,14 @@ cd frontend && npm run lint && npm test && npm run build
 
 ## Honest status
 * Real NASA-derived dimensions: D1 cold, D2 aridity, D7 light (POWER, annual); D3 barren (MODIS NDVI), D6 ice **proxy** (MODIS snow), D8 thermal swing (MODIS LST) — **calendar year 2024 (12 monthly granules; one year, not a multi-year climatology)**.
-* **Missing:** D4 terrain, D5 rock. They stay empty and are shown as "no data yet", never zero.
+* D4 terrain: NASA SRTMGL30 (~1 km) landscape relief, static (SRTM 2000). Plus a finer 30 m SRTM check for the top regions.
+* **Missing:** D5 rock (no defensible lithology data yet). It stays empty and is shown as "no data yet", never zero.
 * Moon/Mars reference-site rules are team drafts; see `docs/TARGET_EVIDENCE.md` for which rules have a retrieved source.
-* Grid is 5° (coarse). Regions are candidate areas, not verified ground-test sites.
+* Grid is 2.5° (3,435 land cells incl. Antarctica; ~280 km cells). Regions are candidate areas, not verified ground-test sites.
 
 ## Docs
 `docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` ·
-`docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
+`docs/SOLUTION.md` · `docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
 
 ## Rules
 Never change a column/field name without telling everyone. `scripts/validate_data.py` must pass before every push.

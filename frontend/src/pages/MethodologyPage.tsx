@@ -99,7 +99,7 @@ export function MethodologyPage() {
         ) : (
           <>
             <p className="text-xs text-[#68788F]">
-              Real grid built {val.grid_built_utc}. Sites NASA publishes as analog sites, evaluated at their nearest 5° cell with generic target weights. Held-out
+              Real grid built {val.grid_built_utc}. Sites NASA publishes as analog sites, evaluated at their nearest 2.5° cell with generic target weights. Held-out
               positives are the headline; no rules were tuned on these sites.
             </p>
             {val.heldout && (
@@ -180,9 +180,9 @@ export function MethodologyPage() {
       <section className="rounded-2xl p-6 space-y-2 bg-[#FFF4E5] border border-[#A15C00]/30 text-[#6B3F00] text-xs leading-relaxed">
         <h2 className="font-display font-bold text-base">Known limitations (current state)</h2>
         <ul className="list-disc pl-5 space-y-1">
-          <li>Terrain (D4) and rock (D5) have no data yet; MODIS/GPM-derived dimensions cover one year (2024), not a multi-year climatology.</li>
+          <li>Rock (D5) has no data yet. Terrain (D4) is coarse 1 km landscape relief, not rover-scale slope. MODIS/GPM-derived dimensions cover one year (2024), not a multi-year climatology.</li>
           <li>Moon and Mars reference-site rules are v0 team drafts, not yet grounded in LOLA, MOLA, Diviner or CRISM values.</li>
-          <li>Validation uses only a handful of NASA-documented analog sites at 5° resolution; see the validation section above.</li>
+          <li>Validation uses only a handful of NASA-documented analog sites at 2.5° resolution; see the validation section above.</li>
           <li>The ice dimension, when present, is a temperature-based proxy, not a snow or ice measurement.</li>
           <li>Region place-names are approximate labels; the engine scores grid cells.</li>
           <li>Earth cannot reproduce lunar or Martian gravity, atmosphere, radiation or dust behaviour.</li>

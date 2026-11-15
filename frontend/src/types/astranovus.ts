@@ -192,6 +192,7 @@ export interface MissionResult {
   assessment: Readiness;
   data_state: DataState;
   provisional: boolean;
+  custom_weights: Record<string, number>;
   grid: GridInfo;
   dimension_status: DimensionStatus[];
   limits_on_earth: string[];
@@ -271,6 +272,8 @@ export interface ValidationRow {
   percentile: number | null;
   dist_deg: number;
   in_grid: boolean;
+  cell_lat: number;
+  cell_lon: number;
 }
 
 export interface ValidationResponse {

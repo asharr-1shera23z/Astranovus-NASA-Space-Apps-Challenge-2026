@@ -52,13 +52,15 @@ export const fetchExperiments = (signal?: AbortSignal) => getJson<ExperimentsRes
 export const fetchTargets = (signal?: AbortSignal) => getJson<BackendTarget[]>('/targets', signal);
 
 export function fetchMissionRecommend(
-  params: { experiment: string; target?: TargetId; allowUnverified?: boolean; top?: number; minCoverage?: number },
+  params: { experiment: string; target?: TargetId; allowUnverified?: boolean; top?: number; minCoverage?: number; weights?: Record<string, number> },
   signal?: AbortSignal
 ) {
   const qs = new URLSearchParams({ experiment: params.experiment, top: String(params.top ?? 10) });
   if (params.target) qs.set('target', params.target);
   if (params.allowUnverified) qs.set('allow_unverified', 'true');
   if (params.minCoverage !== undefined) qs.set('min_coverage', String(params.minCoverage));
+  const w = Object.entries(params.weights ?? {}).filter(([, v]) => Math.abs(v - 1) > 1e-9);
+  if (w.length) qs.set('weights', w.map(([k, v]) => `${k}:${v}`).join(','));
   return getJson<MissionResult>(`/mission/recommend?${qs.toString()}`, signal);
 }
 

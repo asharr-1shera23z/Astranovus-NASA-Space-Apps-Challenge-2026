@@ -38,6 +38,8 @@ interface MissionContextValue {
   resultError: string | null;
   allowUnverified: boolean;
   setAllowUnverified: (v: boolean) => void;
+  customWeights: Record<string, number>;
+  setCustomWeights: (w: Record<string, number>) => void;
 
   selectedRegionId: string | null;
   selectedRegion: Region | null;
@@ -88,6 +90,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
   const [resultStatus, setResultStatus] = useState<ResultStatus>('idle');
   const [resultError, setResultError] = useState<string | null>(null);
   const [allowUnverified, setAllowUnverified] = useState(false);
+  const [customWeights, setCustomWeights] = useState<Record<string, number>>({});
 
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -144,7 +147,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
     const ac = new AbortController();
     setResultStatus('loading');
     setResultError(null);
-    fetchMissionRecommend({ experiment: experimentId, target: targetId, allowUnverified }, ac.signal)
+    fetchMissionRecommend({ experiment: experimentId, target: targetId, allowUnverified, weights: customWeights }, ac.signal)
       .then((res) => {
         setResult(res);
         setResultStatus('ready');
@@ -158,9 +161,10 @@ export function MissionProvider({ children }: { children: ReactNode }) {
         setResultStatus('error');
       });
     return () => ac.abort();
-  }, [experimentId, targetId, allowUnverified, experiment]);
+  }, [experimentId, targetId, allowUnverified, experiment, customWeights]);
 
   const setBody = useCallback((b: Body | null) => {
+    setCustomWeights({});
     setBodyState(b);
     setExperimentId(null);
     setTargetId(null);
@@ -169,6 +173,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
 
   const setExperiment = useCallback(
     (id: string | null) => {
+      setCustomWeights({});
       setAllowUnverified(false);
       setExperimentId(id);
       const ex = experiments.find((e) => e.id === id);
@@ -183,6 +188,7 @@ export function MissionProvider({ children }: { children: ReactNode }) {
   );
 
   const setTarget = useCallback((id: TargetId) => {
+    setCustomWeights({});
     setAllowUnverified(false);
     setTargetId(id);
   }, []);
@@ -224,6 +230,8 @@ export function MissionProvider({ children }: { children: ReactNode }) {
     resultError,
     allowUnverified,
     setAllowUnverified,
+    customWeights,
+    setCustomWeights,
     selectedRegionId,
     selectedRegion,
     selectRegion: setSelectedRegionId,

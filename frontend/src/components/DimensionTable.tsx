@@ -1,5 +1,15 @@
 import type { RegionDimension } from '../types/astranovus';
 import { pct } from '../utils/mission';
+
+const RULE_TEXT = { high: 'higher is more target-like', low: 'lower is more target-like', band: 'a middle band is most target-like' } as const;
+
+function explain(d: RegionDimension): string {
+  if (d.similarity === null) return 'Not assessed: no Earth data for this dimension yet.';
+  const p = Math.round((d.similarity ?? 0) * 100);
+  const lvl = p >= 80 ? 'Strong alignment' : p >= 60 ? 'Moderate alignment' : p >= 40 ? 'Partial alignment' : 'Weak alignment';
+  const ep = d.percentile === null ? '' : ` This cell ranks at the ${Math.round(d.percentile * 100)}th percentile of Earth cells.`;
+  return `${lvl} (${p}%): target rule is "${RULE_TEXT[d.rule]}".${ep}`;
+}
 import { StatusChip } from './StatusViews';
 
 /** Per-dimension breakdown. Missing dimensions are shown as "no data", never as 0%. */
@@ -10,6 +20,7 @@ export function DimensionTable({ dims, accent = '#0B5ED7' }: { dims: RegionDimen
         <div key={d.dimension} className="px-4 py-3 space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
+              <span className="font-mono text-[11px] font-bold text-[#0B5ED7]">{d.dimension.split('_')[0]}</span>
               <span className="font-display font-semibold text-sm text-[#142B50]">{d.name}</span>
               <StatusChip status={d.data_status} />
               {d.temporal && d.data_status !== 'missing' && (
@@ -38,12 +49,8 @@ export function DimensionTable({ dims, accent = '#0B5ED7' }: { dims: RegionDimen
               </span>
             </div>
           )}
-          <div className="text-[11px] text-[#68788F] leading-snug">
-            {d.percentile !== null && (
-              <span className="font-mono text-[#142B50]">Earth percentile {pct(d.percentile)} · </span>
-            )}
-            {d.source}
-          </div>
+          <div className="text-xs text-[#142B50] leading-snug">{explain(d)}</div>
+          <div className="text-[11px] text-[#68788F] leading-snug">Earth data: {d.source}</div>
         </div>
       ))}
     </div>

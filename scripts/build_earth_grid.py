@@ -180,6 +180,57 @@ def process_gpm(cells, step):
     return out, files
 
 
+def process_dem(cells, step):
+    """NASA SRTMGL30 v002 (30 arc-second, ~1 km). Tiles are raw big-endian int16, 4800 x 6000, nodata -9999.
+    Tile name = upper-left corner (e.g. w020n90 covers lon -20..20, lat 40..90). Cell edges are multiples of 2.5 deg,
+    tile edges are multiples of 10 deg, so every cell lies inside one tile."""
+    import io
+    import zipfile
+    res = 1 / 120.0
+    cache, feats, files = {}, [], []
+
+    def tile(lon, lat):
+        ul_lon = int(np.floor((lon + 180) / 40.0) * 40 - 180)
+        ul_lat = 90 if lat >= 40 else (40 if lat >= -10 else -10)
+        name = f"{'w' if ul_lon < 0 else 'e'}{abs(ul_lon):03d}{'n' if ul_lat >= 0 else 's'}{abs(ul_lat):02d}"
+        if name not in cache:
+            f = RAW / "SRTMGL30" / f"{name}.SRTMGL30.dem.zip"
+            if not f.exists():
+                cache[name] = None
+            else:
+                with zipfile.ZipFile(f) as z:
+                    raw = z.read(z.namelist()[0])
+                cache[name] = np.frombuffer(raw, dtype=">i2").reshape(6000, 4800)
+                files.append(f.name)
+        return cache[name], ul_lon, ul_lat
+
+    out = {k: np.full(len(cells), np.nan) for k in ("elev_mean_m", "relief_m", "slope_mean_deg", "rough_std_m", "valid_frac")}
+    for i, r in enumerate(cells.itertuples()):
+        dem, ul_lon, ul_lat = tile(r.lon, r.lat)
+        if dem is None or r.lat < -60:
+            continue
+        r0 = int(round((ul_lat - (r.lat + step / 2)) / res)); r1 = int(round((ul_lat - (r.lat - step / 2)) / res))
+        c0 = int(round((r.lon - step / 2 - ul_lon) / res)); c1 = int(round((r.lon + step / 2 - ul_lon) / res))
+        w = dem[max(r0, 0):min(r1, 6000), max(c0, 0):min(c1, 4800)].astype(np.float64)
+        if w.size == 0:          # e.g. Antarctica: SRTMGL30 has no tile south of 60S -> D4 stays empty there
+            continue
+        ok = w > -9000
+        out["valid_frac"][i] = ok.mean()
+        if ok.mean() < MIN_VALID_FRACTION:
+            continue
+        wv = np.where(ok, w, np.nan)
+        v = wv[ok]
+        dy = 926.0
+        dx = 926.0 * max(np.cos(np.radians(r.lat)), 0.05)
+        gy, gx = np.gradient(wv, dy, dx)
+        slope = np.degrees(np.arctan(np.hypot(gx, gy)))
+        out["elev_mean_m"][i] = v.mean()
+        out["relief_m"][i] = np.percentile(v, 95) - np.percentile(v, 5)
+        out["rough_std_m"][i] = v.std()
+        out["slope_mean_deg"][i] = np.nanmean(slope)
+    return out, sorted(files)
+
+
 def pct(series: pd.Series, invert=False) -> pd.Series:
     s = -series if invert else series
     return s.rank(pct=True, na_option="keep").round(4)
@@ -189,6 +240,11 @@ def pct(series: pd.Series, invert=False) -> pd.Series:
 def main():
     PROC.mkdir(parents=True, exist_ok=True)
     ARCHIVE.mkdir(parents=True, exist_ok=True)
+    global BASE_BACKUP
+    if len(sys.argv) > 1 and float(sys.argv[1]) != 5.0:
+        BASE_BACKUP = ARCHIVE / f"earth_grid_power_only_{float(sys.argv[1]):g}deg.csv"
+        if not BASE_BACKUP.exists():
+            sys.exit(f"{BASE_BACKUP.name} not found: run scripts/fetch_power_grid.py {sys.argv[1]} first.")
     if not BASE_BACKUP.exists():
         cur = pd.read_csv(OUT_GRID)
         if cur[["D3_barren", "D6_ice"]].notna().any().any():
@@ -199,7 +255,7 @@ def main():
     cur = pd.read_csv(OUT_GRID)
     if cur[["D3_barren", "D6_ice"]].notna().any().any():
         n_prev = len(json.load(open(OUT_META))["temporal_coverage"]["MODIS_GPM_months"]) if OUT_META.exists() else 0
-        snap = ARCHIVE / f"earth_grid_modis_{n_prev}months_prev.csv"
+        snap = ARCHIVE / f"earth_grid_modis_{n_prev}months_{len(cur)}cells_prev.csv"
         if not snap.exists():
             shutil.copy2(OUT_GRID, snap)
             print("archived previous MODIS build ->", snap)
@@ -209,6 +265,7 @@ def main():
     step = float(np.min(np.diff(lats)))
     print(f"{len(cells)} cells at {step} deg")
 
+    dem, dem_files = process_dem(cells, step)
     lst, lst_files = process_lst(cells, step)
     ndvi, ndvi_files = process_ndvi(cells, step)
     snow, snow_files = process_snow(cells, step)
@@ -222,6 +279,9 @@ def main():
 
     def cols(prefix):
         return [c for c in feat.columns if c.startswith(prefix + "_m")]
+
+    for k, v in dem.items():
+        feat[f"dem_{k}"] = v
 
     # --- derived physical features
     n_months = len(lst)
@@ -242,8 +302,8 @@ def main():
     out["D6_ice"] = pct(feat["snow_peak_pct"]).values
     power_d8 = base["D8_thermal_swing"].copy()
     out["D8_thermal_swing"] = pct(feat["lst_dtr_K_mean"]).values
-    for d in ("D4_terrain", "D5_rock"):
-        out[d] = np.nan
+    out["D4_terrain"] = pct(feat["dem_relief_m"]).values       # landscape relief within the cell (P95-P5 of 1 km elevation)
+    out["D5_rock"] = np.nan
     out = out[["cell_id", "lat", "lon"] + DIMS]
 
     feat["D8_power_air_dtr_pct_v1"] = power_d8.values   # previous POWER air-temperature-range dimension, kept for traceability
@@ -261,6 +321,17 @@ def main():
         "D6 MODIS snow peak vs POWER months-below-0C proxy (v1 D6, if any)": None,
     }
 
+    s2p = ROOT / "data/processed/stage2.json"
+    if s2p.exists():
+        s2 = [e for e in json.load(open(s2p)) if e.get("covered") and e.get("slope_mean_deg") is not None]
+        pairs = []
+        for e in s2:
+            j = ((cells.lat - e["lat"]).abs() + (cells.lon - e["lon"]).abs()).idxmin()
+            if abs(cells.lat[j] - e["lat"]) < 0.01 and not np.isnan(feat["dem_slope_mean_deg"][j]):
+                pairs.append((feat["dem_relief_m"][j], e["relief_m"]))
+        if len(pairs) >= 4:
+            a = pd.DataFrame(pairs)
+            cross["D4 1-km cell relief (SRTMGL30) vs 30-m 1-degree-tile relief (SRTM 1 arc-sec, top regions only)"] = {"n": len(a), "spearman": round(float(a.corr(method="spearman").iloc[0, 1]), 3)}
     months = sorted(set(lst) | set(ndvi) | set(snow) | set(gpm))
     full = len(months) == 12 and all(len(d) == 12 for d in (lst, ndvi, snow, gpm))
     span = (f"calendar year 2024, all 12 monthly granules (a single year, not a multi-year climatology)" if full
@@ -272,7 +343,7 @@ def main():
         "built_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "script": "scripts/build_earth_grid.py",
         "grid": {"cells": n, "step_deg": step, "lat_range": [float(out.lat.min()), float(out.lat.max())],
-                 "cell_definition": "5-degree boxes centred on the land cells of the NASA POWER grid (v1 cell_ids preserved)"},
+                 "cell_definition": f"{step:g}-degree boxes centred on the land cells of the NASA POWER grid"},
         "values_are": "percentile ranks (0-1) among the valid cells of this grid; empty = no data",
         "temporal_coverage": {"MODIS_GPM_months": [f"2024-{m:02d}" for m in months],
                               "complete_year": full, "span": span,
@@ -284,6 +355,7 @@ def main():
                           "snow": "only 0-100 percent kept; 211 night, 250 cloud, 253 no decision, 254 water, 255 fill excluded",
                           "GPM": "fill -9999.9 removed; mm/hr monthly mean rate x 24 = mm/day"},
         "products": {
+            "SRTMGL30": {"version": "002", "doi": "10.5067/MEaSUREs/SRTM/SRTMGL30.002", "files": dem_files, "variables": ["elevation (int16, m)"], "note": "~1 km; GTOPO30-filled outside 60N-56S"},
             "MOD11C3": {"version": "061", "doi": "10.5067/MODIS/MOD11C3.061", "files": lst_files, "variables": ["LST_Day_CMG", "LST_Night_CMG", "Percent_land_in_grid"], "scale": "0.02 K"},
             "MOD13C2": {"version": "061", "doi": "10.5067/MODIS/MOD13C2.061", "files": ndvi_files, "variables": ["CMG 0.05 Deg Monthly NDVI", "CMG 0.05 Deg Monthly pixel reliability"], "scale": "1/10000"},
             "MOD10CM": {"version": "061", "doi": "10.5067/MODIS/MOD10CM.061", "files": snow_files, "variables": ["Snow_Cover_Monthly_CMG"], "scale": "percent"},
@@ -294,7 +366,7 @@ def main():
             "D1_cold": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER T2M (2 m AIR temperature, not land-surface temperature), inverted percentile"},
             "D2_aridity": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER PRECTOTCORR, inverted percentile"},
             "D3_barren": {"status": "derived", "temporal": tshort, "source": "MODIS MOD13C2 v061 NDVI, peak monthly NDVI (inverted percentile). Low NDVI also occurs over snow/ice and does not by itself characterise geology."},
-            "D4_terrain": {"status": "missing", "source": "SRTM/NASADEM not integrated yet"},
+            "D4_terrain": {"status": "derived", "temporal": "static (SRTM, 2000)", "source": "NASA SRTMGL30 v002 (~1 km; GTOPO30-filled outside 60N-56S): relief = P95 minus P5 of 1-km elevation inside the cell, percentile. Landscape-scale relief only, not rover-scale slope."},
             "D5_rock": {"status": "missing", "source": "No lithology/mineral dataset integrated (a categorical rock type will not be turned into a percentile without a documented method)"},
             "D6_ice": {"status": "proxy", "temporal": tshort, "source": "MODIS MOD10CM v061 snow cover extent, peak of monthly cell means. A snow-cover proxy; NOT permafrost, ground ice or subsurface ice."},
             "D7_polar_light": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER ALLSKY_SFC_SW_DWN seasonal swing. A terrestrial seasonal-insolation proxy; does not reproduce lunar illumination."},

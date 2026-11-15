@@ -1,14 +1,14 @@
 {
-  "built_utc": "2026-11-14T22:00:09+00:00",
+  "built_utc": "2026-11-15T00:31:49+00:00",
   "script": "scripts/build_earth_grid.py",
   "grid": {
-    "cells": 629,
-    "step_deg": 5.0,
+    "cells": 3435,
+    "step_deg": 2.5,
     "lat_range": [
-      -52.5,
-      82.5
+      -88.75,
+      81.25
     ],
-    "cell_definition": "5-degree boxes centred on the land cells of the NASA POWER grid (v1 cell_ids preserved)"
+    "cell_definition": "2.5-degree boxes centred on the land cells of the NASA POWER grid"
   },
   "values_are": "percentile ranks (0-1) among the valid cells of this grid; empty = no data",
   "temporal_coverage": {
@@ -38,6 +38,42 @@
     "GPM": "fill -9999.9 removed; mm/hr monthly mean rate x 24 = mm/day"
   },
   "products": {
+    "SRTMGL30": {
+      "version": "002",
+      "doi": "10.5067/MEaSUREs/SRTM/SRTMGL30.002",
+      "files": [
+        "e020n40.SRTMGL30.dem.zip",
+        "e020n90.SRTMGL30.dem.zip",
+        "e020s10.SRTMGL30.dem.zip",
+        "e060n40.SRTMGL30.dem.zip",
+        "e060n90.SRTMGL30.dem.zip",
+        "e060s10.SRTMGL30.dem.zip",
+        "e100n40.SRTMGL30.dem.zip",
+        "e100n90.SRTMGL30.dem.zip",
+        "e100s10.SRTMGL30.dem.zip",
+        "e140n40.SRTMGL30.dem.zip",
+        "e140n90.SRTMGL30.dem.zip",
+        "e140s10.SRTMGL30.dem.zip",
+        "w020n40.SRTMGL30.dem.zip",
+        "w020n90.SRTMGL30.dem.zip",
+        "w020s10.SRTMGL30.dem.zip",
+        "w060n40.SRTMGL30.dem.zip",
+        "w060n90.SRTMGL30.dem.zip",
+        "w060s10.SRTMGL30.dem.zip",
+        "w100n40.SRTMGL30.dem.zip",
+        "w100n90.SRTMGL30.dem.zip",
+        "w100s10.SRTMGL30.dem.zip",
+        "w140n40.SRTMGL30.dem.zip",
+        "w140n90.SRTMGL30.dem.zip",
+        "w140s10.SRTMGL30.dem.zip",
+        "w180n90.SRTMGL30.dem.zip",
+        "w180s10.SRTMGL30.dem.zip"
+      ],
+      "variables": [
+        "elevation (int16, m)"
+      ],
+      "note": "~1 km; GTOPO30-filled outside 60N-56S"
+    },
     "MOD11C3": {
       "version": "061",
       "doi": "10.5067/MODIS/MOD11C3.061",
@@ -295,8 +331,9 @@
       "source": "MODIS MOD13C2 v061 NDVI, peak monthly NDVI (inverted percentile). Low NDVI also occurs over snow/ice and does not by itself characterise geology."
     },
     "D4_terrain": {
-      "status": "missing",
-      "source": "SRTM/NASADEM not integrated yet"
+      "status": "derived",
+      "temporal": "static (SRTM, 2000)",
+      "source": "NASA SRTMGL30 v002 (~1 km; GTOPO30-filled outside 60N-56S): relief = P95 minus P5 of 1-km elevation inside the cell, percentile. Landscape-scale relief only, not rover-scale slope."
     },
     "D5_rock": {
       "status": "missing",
@@ -321,28 +358,32 @@
   "coverage_by_dimension": {
     "D1_cold": 1.0,
     "D2_aridity": 1.0,
-    "D3_barren": 0.965,
-    "D4_terrain": 0.0,
+    "D3_barren": 0.689,
+    "D4_terrain": 0.718,
     "D5_rock": 0.0,
-    "D6_ice": 1.0,
+    "D6_ice": 0.999,
     "D7_polar_light": 1.0,
-    "D8_thermal_swing": 0.998
+    "D8_thermal_swing": 0.999
   },
   "cross_checks": {
     "D1_cold (POWER air temp) vs MODIS mean LST over available months (inverted)": {
-      "n": 629,
-      "spearman": 0.977
+      "n": 3435,
+      "spearman": 0.991
     },
     "D2_aridity (POWER annual precip) vs GPM IMERG mean precip over available months (inverted)": {
-      "n": 629,
-      "spearman": 0.906
+      "n": 3435,
+      "spearman": 0.905
     },
     "D8 MODIS LST day-night range vs POWER air-temperature range (v1 D8)": {
-      "n": 628,
-      "spearman": -0.235
+      "n": 3432,
+      "spearman": -0.159
+    },
+    "D4 1-km cell relief (SRTMGL30) vs 30-m 1-degree-tile relief (SRTM 1 arc-sec, top regions only)": {
+      "n": 13,
+      "spearman": 0.868
     }
   },
   "preserved": {
-    "previous_grid_backup": "data/processed/archive/earth_grid_power_only_v1.csv"
+    "previous_grid_backup": "data/processed/archive/earth_grid_power_only_2.5deg.csv"
   }
 }

@@ -23,6 +23,9 @@ from .geo_labels import label_for
 
 # Below this share of (purpose-weighted) target weight that has ANY data in the grid, we refuse
 # to present a ranking by default. Documented in docs/DATA_CONTRACT.md section 7.
+# Share of passing cells (best first) turned into regions. 60% (engine default is 15%) so one huge high-scoring
+# area such as the Antarctic plateau cannot crowd every other candidate region out of the list.
+TOP_PCT = 0.60
 MIN_RESULT_COVERAGE = 0.5
 
 # What we know about how each dimension is built (see scripts/fetch_power_grid.py).
@@ -148,10 +151,28 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         }
 
     # ---- experiment -> engine inputs ---------------------------------------------------
-    def effective_purpose(exp: dict) -> dict:
+    def parse_weights(raw: str | None) -> dict:
+        """'D1_cold:1.5,D2_aridity:0' -> {dim: factor}. Factors 0-3 multiply the profile's weights (user tuning)."""
+        out: dict = {}
+        if not raw:
+            return out
+        for part in raw.split(","):
+            try:
+                k, v = part.split(":")
+                v = float(v)
+            except ValueError:
+                raise HTTPException(422, f"bad weights entry {part!r}; use DIM:factor,DIM:factor")
+            if k not in dim_meta or not 0 <= v <= 3:
+                raise HTTPException(422, f"weight {part!r}: unknown dimension or factor outside 0-3")
+            out[k] = v
+        return out
+
+    def effective_purpose(exp: dict, custom: dict | None = None) -> dict:
         pu = purposes[exp["purpose_id"]]
         mult = dict(pu.get("multipliers", {}))
         for dim, m in exp.get("multiplier_overrides", {}).items():
+            mult[dim] = mult.get(dim, 1.0) * m
+        for dim, m in (custom or {}).items():
             mult[dim] = mult.get(dim, 1.0) * m
         gates = list(pu.get("gates", [])) + list(exp.get("extra_gates", []))
         return {**pu, "multipliers": mult, "gates": gates}
@@ -160,8 +181,8 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         pu = purposes[exp["purpose_id"]]
         return [t for t in pu["targets"] if t in targets and targets[t]["body"] == exp["body"]]
 
-    def assess(exp: dict, target: dict) -> dict:
-        pu = effective_purpose(exp)
+    def assess(exp: dict, target: dict, custom: dict | None = None) -> dict:
+        pu = effective_purpose(exp, custom)
         eff = apply_purpose(target, pu)
         total = have = 0.0
         missing, proxies = [], []
@@ -239,7 +260,7 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
 
     @router.get("/mission/recommend")
     def mission_recommend(experiment: str, target: str | None = None, min_coverage: float = 0.4,
-                          top: int = 10, allow_unverified: bool = False):
+                          top: int = 10, allow_unverified: bool = False, weights: str | None = None):
         if experiment not in experiments:
             raise HTTPException(404, f"unknown experiment {experiment}")
         exp = experiments[experiment]
@@ -250,9 +271,10 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         if tid not in allowed:
             raise HTTPException(422, f"target {tid} not valid for this experiment; use one of {allowed}")
         t = targets[tid]
-        pu = effective_purpose(exp)
+        custom = parse_weights(weights)
+        pu = effective_purpose(exp, custom)
         eff = apply_purpose(t, pu)
-        assessment = assess(exp, t)
+        assessment = assess(exp, t, custom)
         status = data_status()
         status_by_id = {d["id"]: d for d in status["dimensions"]}
 
@@ -263,6 +285,7 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
             "assessment": assessment,
             "data_state": assessment["state"],
             "provisional": False,
+            "custom_weights": custom,
             "grid": status["grid"],
             "dimension_status": status["dimensions"],
             "limits_on_earth": LIMITS_ON_EARTH[exp["body"]] + exp.get("cannot_reproduce", []),
@@ -272,7 +295,7 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         if assessment["state"] == "unavailable" and not allow_unverified:
             return _py({**base, "regions": [], "n_cells_passed": 0, "weights_used": {}})
 
-        out = _recommend(grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top)
+        out = _recommend(grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top, top_pct=TOP_PCT)
         base["provisional"] = assessment["state"] == "unavailable"
         regions = []
         for r in out.get("regions", []):

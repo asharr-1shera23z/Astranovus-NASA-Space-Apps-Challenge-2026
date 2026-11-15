@@ -42,14 +42,14 @@ def test_purpose_multipliers_change_weights_and_result():
 def test_gates_drop_failing_cells_and_flag_unverified():
     rows = []
     for i, (cold, ice) in enumerate([(0.9, 0.9), (0.95, 0.1), (0.8, np.nan)]):
-        rows.append({"cell_id": i, "lat": float(i * 5), "lon": 0.0, "D1_cold": cold, "D6_ice": ice})
+        rows.append({"cell_id": i, "lat": float(i * 30), "lon": 0.0, "D1_cold": cold, "D6_ice": ice})  # far apart: separate regions
     g = grid(rows)
     t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}}}
     pu = {"gates": [{"dim": "D6_ice", "op": ">=", "value": 0.5, "why": "needs ice"}]}
     dims = [{"id": "D1_cold", "earth_source": "x"}]
     out = recommend(g, t, pu, dims, min_coverage=0.0, top_regions=5, top_pct=1.0)
     ids = {(r["best_cell"]["lat"]) for r in out["regions"]}
-    assert 5.0 not in ids                      # cell 1 fails the ice gate and is dropped
+    assert 30.0 not in ids                      # cell 1 fails the ice gate and is dropped
     unverified = [r for r in out["regions"] if r["notes"]]
     assert unverified and "unverified" in unverified[0]["notes"][0]   # missing gate data is flagged, never silent
 
@@ -60,3 +60,12 @@ def test_neighbouring_cells_merge_into_one_region():
     t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}}}
     out = recommend(grid(rows), t, {}, [{"id": "D1_cold", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0)
     assert sorted(r["n_cells"] for r in out["regions"]) == [1, 3]
+
+
+def test_wide_plateau_is_split_into_bounded_regions():
+    # 14 adjacent cells in a row spanning 65 degrees, all scoring the same: must not collapse into one blob
+    rows = [{"cell_id": i, "lat": 0.0, "lon": float(i * 5), "D1_cold": 1.0} for i in range(14)]
+    t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}}}
+    out = recommend(grid(rows), t, {}, [{"id": "D1_cold", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0, top_regions=20)
+    assert len(out["regions"]) >= 3
+    assert max(r["n_cells"] for r in out["regions"]) <= 7   # radius 15 deg on a 5 deg grid

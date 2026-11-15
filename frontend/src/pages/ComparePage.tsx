@@ -1,4 +1,4 @@
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Legend, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { PageId } from '../components/Navbar';
 import { InfoNote } from '../components/StatusViews';
 import { useMission } from '../state/MissionContext';
@@ -150,8 +150,9 @@ export function ComparePage({ onNavigate }: { onNavigate: (p: PageId) => void })
             </table>
           </div>
 
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-5">
-            <h2 className="font-display font-bold text-base text-[#142B50] mb-2">Match by dimension (%)</h2>
+            <h2 className="font-display font-bold text-base text-[#142B50] mb-2">Dimension similarity comparison (%)</h2>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chart}>
@@ -167,6 +168,25 @@ export function ComparePage({ onNavigate }: { onNavigate: (p: PageId) => void })
               </ResponsiveContainer>
             </div>
             <p className="text-[11px] text-[#68788F]">Dimensions with no data appear as gaps, not as zero.</p>
+          </div>
+          <div className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-5">
+            <h2 className="font-display font-bold text-base text-[#142B50] mb-2">Multi-site radar overlay</h2>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={chart.filter((row) => chosen.every((r) => row[r.id] !== null))} outerRadius="70%">
+                  <PolarGrid stroke="#E1E8F0" />
+                  <PolarAngleAxis dataKey="dimension" tick={{ fontSize: 10, fill: '#142B50', fontWeight: 600 }} />
+                  <PolarRadiusAxis angle={90} domain={[0, 100]} tick={{ fontSize: 9, fill: '#68788F' }} />
+                  {chosen.map((r, i) => (
+                    <Radar key={r.id} name={`#${r.rank} ${r.region_name ?? r.location_label}`} dataKey={r.id} stroke={SERIES_COLORS[i]} fill={SERIES_COLORS[i]} fillOpacity={0.2} />
+                  ))}
+                  <Tooltip contentStyle={{ borderRadius: 10, borderColor: '#E1E8F0', fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[11px] text-[#68788F]">Only dimensions with data for every selected region are drawn.</p>
+          </div>
           </div>
 
           <div className="bg-[#FFFFFF] border border-[#E1E8F0] rounded-2xl p-5 space-y-2">

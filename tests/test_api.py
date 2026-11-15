@@ -19,7 +19,8 @@ def test_data_status_matches_grid():
         has = m.GRID[d].notna().any()
         assert (status["status"] != "missing") == bool(has)
     assert by["D6_ice"]["status"] == "proxy"          # snow cover is a proxy, never labelled as measured ice
-    assert by["D4_terrain"]["status"] == "missing"    # no terrain data integrated: must stay missing
+    assert by["D5_rock"]["status"] == "missing"       # no defensible lithology data: must stay missing
+    assert by["D4_terrain"]["status"] == "derived" and by["D4_terrain"]["cell_coverage"] > 0.5
 
 
 def test_experiments_only_offer_compatible_targets():
@@ -57,3 +58,13 @@ def test_existing_endpoints_still_work():
     assert client.get("/score", params={"target": "MARS_ICE", "limit": 5}).status_code == 200
     assert client.get("/compare", params={"lat": 20, "lon": 10}).status_code == 200
     assert client.get("/recommend", params={"body": "moon", "purpose": "ISRU_WATER"}).status_code == 200
+
+
+def test_custom_weights_change_result_and_validate():
+    base = client.get("/mission/recommend", params={"experiment": "MARS_GEOLOGY_SAMPLING", "target": "MARS_JEZERO", "top": 3}).json()
+    tuned = client.get("/mission/recommend", params={"experiment": "MARS_GEOLOGY_SAMPLING", "target": "MARS_JEZERO", "top": 3,
+                                                    "weights": "D2_aridity:0,D8_thermal_swing:3"}).json()
+    assert tuned["custom_weights"] == {"D2_aridity": 0.0, "D8_thermal_swing": 3.0}
+    assert tuned["weights_used"] != base["weights_used"]
+    assert client.get("/mission/recommend", params={"experiment": "MARS_GEOLOGY_SAMPLING", "weights": "D2_aridity:9"}).status_code == 422
+    assert client.get("/mission/recommend", params={"experiment": "MARS_GEOLOGY_SAMPLING", "weights": "nonsense"}).status_code == 422

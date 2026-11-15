@@ -37,7 +37,22 @@ def _components(pts: np.ndarray, eps: float) -> list[int]:
     return [find(i) for i in range(n)]
 
 
-def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10, top_pct=0.15):
+def _peak_regions(pts: np.ndarray, radius_deg: float) -> list[int]:
+    """Peak-seeded regions. `pts` rows are (lat, lon) sorted best-score first. Each unassigned cell, taken in score
+    order, becomes a region seed and claims every still-unassigned cell within `radius_deg` (great-circle). This keeps
+    regions bounded: a continent-sized plateau of high scores becomes several distinct regions instead of one blob."""
+    lat, lon = np.radians(pts[:, 0]), np.radians(pts[:, 1])
+    label = np.full(len(pts), -1)
+    for i in range(len(pts)):
+        if label[i] >= 0:
+            continue
+        cosd = np.sin(lat[i]) * np.sin(lat) + np.cos(lat[i]) * np.cos(lat) * np.cos(lon - lon[i])
+        d = np.degrees(np.arccos(np.clip(cosd, -1, 1)))
+        label[(label < 0) & (d <= radius_deg)] = i
+    return label.tolist()
+
+
+def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10, top_pct=0.15, region_radius_deg=15.0):
     t = apply_purpose(target, purpose)
     sc = score_grid(grid, t).dropna(subset=["score"])
     sc = sc[sc.coverage >= min_coverage]
@@ -49,10 +64,8 @@ def recommend(grid, target, purpose, dims_meta, min_coverage=0.4, top_regions=10
     sc = sc[sc.cell_id.isin(keep)]
     if sc.empty: return {"regions": [], "n_cells_passed": 0}
     cut = sc.score.quantile(1 - top_pct)
-    top = sc[sc.score >= cut].reset_index(drop=True)
-    step = float(np.min(np.diff(np.sort(grid.lat.unique())))) if grid.lat.nunique() > 1 else 5.0
-    comp = _components(top[["lat", "lon"]].to_numpy(), eps=step * 1.6)
-    top["comp"] = comp
+    top = sc[sc.score >= cut].sort_values("score", ascending=False, kind="stable").reset_index(drop=True)
+    top["comp"] = _peak_regions(top[["lat", "lon"]].to_numpy(), region_radius_deg)
     src = {d["id"]: d["earth_source"] for d in dims_meta}
     regions = []
     for _, grp in top.groupby("comp"):

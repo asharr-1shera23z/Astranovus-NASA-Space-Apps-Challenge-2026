@@ -16,13 +16,13 @@ from global_land_mask import globe
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 CACHE = ROOT / "data/raw/power_cache.json"
-OUT = ROOT / "data/processed/earth_grid.csv"
+ARCHIVE = ROOT / "data/processed/archive"   # POWER-only grids are written here; earth_grid.csv is built by scripts/build_earth_grid.py
 URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
 PARAMS = "T2M,T2M_MAX,T2M_MIN,PRECTOTCORR,ALLSKY_SFC_SW_DWN"
 MONTHS = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]
 
 
-def fetch_point(lat, lon, tries=4):
+def fetch_point(lat, lon, tries=6):
     for i in range(tries):
         try:
             r = requests.get(URL, params={"parameters": PARAMS, "community": "RE", "latitude": lat,
@@ -30,7 +30,7 @@ def fetch_point(lat, lon, tries=4):
             r.raise_for_status()
             return r.json()["properties"]["parameter"]
         except Exception:
-            time.sleep(2 * (i + 1))
+            time.sleep(3 * (i + 1))
     return None
 
 
@@ -58,8 +58,8 @@ def pct(series, invert=False):
     return s.rank(pct=True, na_option="keep").round(4)
 
 
-def build_grid(step, fetch=fetch_point, workers=5):
-    lats = np.arange(-60 + step / 2, 85, step); lons = np.arange(-180 + step / 2, 180, step)
+def build_grid(step, fetch=fetch_point, workers=3):
+    lats = np.arange(-90 + step / 2, 90, step); lons = np.arange(-180 + step / 2, 180, step)
     pts = [(float(a), float(o)) for a in lats for o in lons if globe.is_land(a, o)]
     print(f"{len(pts)} land points at {step} deg")
     cache = json.load(open(CACHE)) if CACHE.exists() else {}
@@ -69,7 +69,9 @@ def build_grid(step, fetch=fetch_point, workers=5):
     done = 0
     with ThreadPoolExecutor(workers) as ex:
         for p, par in ex.map(work, todo):
-            cache[f"{p[0]},{p[1]}"] = par; done += 1
+            if par is not None:
+                cache[f"{p[0]},{p[1]}"] = par
+            done += 1
             if done % 50 == 0:
                 CACHE.parent.mkdir(parents=True, exist_ok=True); json.dump(cache, open(CACHE, "w"))
                 print(f"  {done}/{len(todo)}")
@@ -95,5 +97,7 @@ def build_grid(step, fetch=fetch_point, workers=5):
 if __name__ == "__main__":
     step = float(sys.argv[1]) if len(sys.argv) > 1 else 5.0
     g = build_grid(step)
-    OUT.parent.mkdir(parents=True, exist_ok=True); g.to_csv(OUT, index=False)
-    print("wrote", OUT, len(g), "cells. Now run: python scripts/validate_data.py")
+    ARCHIVE.mkdir(parents=True, exist_ok=True)
+    out = ARCHIVE / (f"earth_grid_power_only_{step:g}deg.csv")
+    g.to_csv(out, index=False)
+    print("wrote", out, len(g), "cells. Now run: .venv-data/Scripts/python scripts/build_earth_grid.py", f"{step:g}")
