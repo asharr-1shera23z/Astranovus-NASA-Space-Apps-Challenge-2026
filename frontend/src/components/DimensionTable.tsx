@@ -33,7 +33,7 @@ export function DimensionTable({ dims, accent = '#0B5ED7' }: { dims: RegionDimen
           </div>
           {d.similarity === null ? (
             <div className="text-xs text-[#B42318] bg-[#FDECEC] rounded-md px-2.5 py-1.5">
-              No data yet for this dimension. It is excluded from the score (not counted as zero).
+              {d.missing_reason ?? 'No data yet for this dimension.'} Excluded from the score (not counted as zero).
             </div>
           ) : (
             <div className="flex items-center gap-3">

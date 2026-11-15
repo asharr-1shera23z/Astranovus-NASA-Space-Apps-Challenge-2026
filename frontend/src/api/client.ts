@@ -34,7 +34,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
     );
   }
   if (!res.ok) {
-    let detail = `API request failed (${res.status})`;
+    let detail = res.status >= 500 ? `The ASTRANOVUS API returned an error (${res.status}). Check that the backend is running and healthy, then retry.` : `API request failed (${res.status})`;
     try {
       const body = await res.json();
       if (typeof body?.detail === 'string') detail = body.detail;

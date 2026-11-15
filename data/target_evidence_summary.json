@@ -1,52 +1,62 @@
 {
   "rows": 49,
-  "supported_rows": 9,
+  "supported_rows": 32,
+  "retired_rows": 4,
   "targets": {
     "MOON_SP_RIDGE": {
-      "grounded": 1,
-      "total": 7,
+      "grounded": 4,
+      "total": 6,
+      "retired": 1,
       "status": "core"
     },
     "MOON_PSR": {
-      "grounded": 2,
-      "total": 6,
+      "grounded": 5,
+      "total": 5,
+      "retired": 1,
       "status": "core"
     },
     "MOON_LAVATUBE": {
-      "grounded": 1,
+      "grounded": 4,
       "total": 5,
+      "retired": 0,
       "status": "core"
     },
     "MARS_ICE": {
-      "grounded": 2,
+      "grounded": 4,
       "total": 6,
+      "retired": 0,
       "status": "core"
     },
     "MARS_JEZERO": {
-      "grounded": 3,
+      "grounded": 5,
       "total": 6,
+      "retired": 0,
       "status": "core"
     },
     "MARS_MUDVOLC": {
-      "grounded": 0,
-      "total": 5,
+      "grounded": 3,
+      "total": 4,
+      "retired": 1,
       "status": "core"
     },
     "MARS_CHLORIDE": {
-      "grounded": 0,
+      "grounded": 1,
       "total": 4,
+      "retired": 0,
       "status": "optional"
     },
     "MARS_AEOLIAN": {
-      "grounded": 0,
-      "total": 5,
+      "grounded": 1,
+      "total": 4,
+      "retired": 1,
       "status": "optional"
     },
     "MOON_MARE": {
-      "grounded": 0,
+      "grounded": 5,
       "total": 5,
+      "retired": 0,
       "status": "optional"
     }
   },
-  "note": "'supported' = a retrieved source states something consistent with the rule direction (qualitative). No weights were changed."
+  "note": "'supported' = a retrieved source is consistent with the rule direction; 'total' counts active (weight > 0) rules only. Numbers are quoted from sources, not measured by ASTRANOVUS."
 }

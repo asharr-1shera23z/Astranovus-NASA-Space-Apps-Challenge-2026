@@ -47,20 +47,18 @@ def tile_name(lat: float, lon: float) -> str:
 
 
 def candidate_regions(top: int):
+    """Top regions exactly as the API returns them (strict gating, 15-degree regions) for every experiment x site."""
     import backend.main as m
-    from backend import mission_api  # noqa: F401
-    from model.recommend import recommend
+    from backend import mission_api
+    router = mission_api.create_router(m.GRID, m.TARGETS, m.DIMENSIONS, m.PURPOSES, m.ROOT, m.GRID_IS_SAMPLE, "earth_grid.csv")
+    ep = {r.path: r.endpoint for r in router.routes}
+    exps = ep["/experiments"]()["experiments"]
     seen = {}
-    exps = json.load(open(ROOT / "data/experiments.json", encoding="utf-8"))["experiments"]
     for e in exps:
-        pu = m.PURPOSES[e["purpose_id"]]
-        for tid in pu["targets"]:
-            t = m.TARGETS[tid]
-            if t["body"] != e["body"]:
-                continue
-            out = recommend(m.GRID, t, pu, m.DIMENSIONS, top_regions=top)
-            for r in out.get("regions", []):
-                seen[(r["best_cell"]["lat"], r["best_cell"]["lon"])] = r
+        for t in e["allowed_targets"]:
+            res = ep["/mission/recommend"](experiment=e["id"], target=t["id"], min_coverage=0.4, top=top, allow_unverified=False, weights=None)
+            for r in res["regions"]:
+                seen[(r["lat"], r["lon"])] = r
     return list(seen)
 
 

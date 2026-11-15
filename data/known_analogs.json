@@ -154,37 +154,89 @@
       "id": "amazon",
       "name": "Amazon rainforest",
       "lat": -3.0,
-      "lon": -60.0
+      "lon": -60.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
     },
     {
       "id": "congo",
       "name": "Congo Basin rainforest",
       "lat": 0.0,
-      "lon": 22.0
+      "lon": 22.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
     },
     {
       "id": "borneo",
       "name": "Borneo rainforest",
       "lat": 0.5,
-      "lon": 114.0
+      "lon": 114.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
     },
     {
       "id": "ganges",
       "name": "Ganges plain farmland",
       "lat": 26.0,
-      "lon": 85.0
+      "lon": 85.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
     },
     {
       "id": "w_europe",
       "name": "Western European farmland",
       "lat": 48.0,
-      "lon": 2.0
+      "lon": 2.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
     },
     {
       "id": "us_midwest",
       "name": "US Midwest cropland",
       "lat": 41.0,
-      "lon": -93.0
+      "lon": -93.0,
+      "hard": false,
+      "why": "humid/vegetated lowland: easy negative"
+    },
+    {
+      "id": "boreal_siberia",
+      "name": "Siberian taiga (cold but forested)",
+      "lat": 58.0,
+      "lon": 100.0,
+      "hard": true,
+      "why": "cold like the polar analogs but vegetated and wet: should rank below tundra/polar desert for ice targets"
+    },
+    {
+      "id": "boreal_canada",
+      "name": "Canadian boreal forest",
+      "lat": 55.0,
+      "lon": -100.0,
+      "hard": true,
+      "why": "cold but forested and humid"
+    },
+    {
+      "id": "great_plains",
+      "name": "US Great Plains grassland",
+      "lat": 41.0,
+      "lon": -100.0,
+      "hard": true,
+      "why": "semi-arid but vegetated farmland: should rank below true deserts for dry-barren targets"
+    },
+    {
+      "id": "sahel_savanna",
+      "name": "Sahel savanna",
+      "lat": 13.0,
+      "lon": 5.0,
+      "hard": true,
+      "why": "hot and seasonally dry but vegetated: neighbours the Sahara without being a barren analog"
+    },
+    {
+      "id": "mediterranean",
+      "name": "Mediterranean scrub (Spain)",
+      "lat": 39.0,
+      "lon": -4.0,
+      "hard": true,
+      "why": "dry summers but vegetated and mild"
     }
   ],
   "hypotheses_pakistan": {

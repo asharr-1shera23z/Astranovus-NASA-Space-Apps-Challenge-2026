@@ -149,6 +149,7 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
           criteria).
           {result.assessment.missing_dimensions.length > 0 && <> Not yet assessed: {result.assessment.missing_dimensions.map(dimLabel).join(', ')}.</>}
           {result.assessment.proxy_dimensions.length > 0 && <> Proxy (not a direct measurement): {result.assessment.proxy_dimensions.map(dimLabel).join(', ')}.</>}
+          {(result.assessment.sparse_dimensions ?? []).length > 0 && <> Defined in under half of all cells (excluded elsewhere): {(result.assessment.sparse_dimensions ?? []).map(dimLabel).join(', ')}.</>}
         </InfoNote>
       )}
 
@@ -160,6 +161,13 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
 
       {result.regions.length > 0 && (
         <>
+          <InfoNote>
+            <strong>Spatial resolution:</strong> each marker is the centre of a {result.grid.step_deg ?? '?'}° grid cell (about 280 km wide); the dashed box on the map shows the selected cell.
+            Results are candidate <em>areas</em> for further study, not pinpointed test sites. Place names are approximate; regions group neighbouring cells within 15° of their best cell.
+            {(result.n_cells_excluded_unverified ?? 0) > 0 && (
+              <> {result.n_cells_excluded_unverified} cells were excluded because a required check for this experiment has no data there (for example ice-covered ground has no barren-ground value).</>
+            )}
+          </InfoNote>
           <WeightTuner />
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
             <div className="lg:col-span-3 space-y-3 lg:max-h-[640px] lg:overflow-y-auto lg:pr-1" role="list" aria-label="Ranked Earth regions">
@@ -255,6 +263,7 @@ export function ResultsPanel({ onOpenProfile }: { onOpenProfile: () => void }) {
                   }))}
                   selectedId={m.selectedRegionId}
                   onSelectMarker={m.selectRegion}
+                  cellSizeDeg={result.grid.step_deg ?? undefined}
                   bodyTheme={bodyLabel(body)}
                   heightClass="h-[420px] lg:h-[560px]"
                 />

@@ -43,6 +43,14 @@ python scripts/build_target_evidence.py
 python scripts/validate_known_analogs.py                     # writes docs/VALIDATION.md
 ```
 
+## Environment variables
+| Variable | Where | Purpose |
+|---|---|---|
+| `ASTRANOVUS_ENV=production` | API | refuses wildcard CORS |
+| `ASTRANOVUS_CORS_ORIGINS` | API | comma-separated frontend origins |
+| `ASTRANOVUS_ALLOW_SAMPLE=1` | API | local UI work only: allow the SYNTHETIC sample grid (red banner) |
+| `VITE_API_URL` | frontend build | API base URL (default `/api`, proxied to localhost:8000 in dev) |
+
 ## Tests
 ```bash
 .venv-data/Scripts/python -m pytest -q tests    # engine + API (real grid)
@@ -50,15 +58,14 @@ cd frontend && npm run lint && npm test && npm run build
 ```
 
 ## Honest status
-* Real NASA-derived dimensions: D1 cold, D2 aridity, D7 light (POWER, annual); D3 barren (MODIS NDVI), D6 ice **proxy** (MODIS snow), D8 thermal swing (MODIS LST) — **calendar year 2024 (12 monthly granules; one year, not a multi-year climatology)**.
-* D4 terrain: NASA SRTMGL30 (~1 km) landscape relief, static (SRTM 2000). Plus a finer 30 m SRTM check for the top regions.
-* **Missing:** D5 rock (no defensible lithology data yet). It stays empty and is shown as "no data yet", never zero.
-* Moon/Mars reference-site rules are team drafts; see `docs/TARGET_EVIDENCE.md` for which rules have a retrieved source.
-* Grid is 2.5° (3,435 land cells incl. Antarctica; ~280 km cells). Regions are candidate areas, not verified ground-test sites.
+* Real NASA-derived grid: 3,435 land cells at 2.5 degrees (about 280 km) incl. Antarctica. D1 cold, D2 aridity, D7 light (NASA POWER, annual); D3 barren (MODIS NDVI), D6 ice **proxy** (MODIS snow cover), D8 thermal swing (MODIS land-surface temperature), D5 rock-composition **proxy** (NASA ASTER emissivity, bare ground only, 13% of cells) - MODIS vegetation/temperature and GPM are calendar year 2024 (one year); MODIS snow is a 2015-2024 climatology.
+* D4 terrain: NASA SRTMGL30 (~1 km) plus the NSIDC Antarctic 1 km DEM, whole-cell relief only; a separate 30 m SRTM check exists for top candidate regions.
+* Moon/Mars reference-site rules are team drafts; `docs/TARGET_EVIDENCE.md` shows which rules have retrieved sources (32 of 49 rows) and which were retired. Real Moon Trek / Mars Trek values still needed: `docs/MANUAL_EVIDENCE_NEEDED.md`.
+* Results are candidate **areas** (2.5 degree cells), not verified ground-test sites. See `docs/PROJECT_STATUS.md` for everything blocked or pending.
 
 ## Docs
 `docs/METHODOLOGY.md` · `docs/DATA_CONTRACT.md` · `docs/DATA_SOURCES.md` · `docs/TARGET_EVIDENCE.md` · `docs/VALIDATION.md` ·
-`docs/SOLUTION.md` · `docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
+`docs/PROJECT_STATUS.md` · `docs/SOLUTION.md` · `docs/MANUAL_EVIDENCE_NEEDED.md` · `docs/PRE_DEPLOYMENT_CHECKLIST.md` · `docs/DEPLOYMENT.md` · `docs/SUBMISSION.md` · `docs/PROJECT_HANDOFF.md` (history)
 
 ## Rules
 Never change a column/field name without telling everyone. `scripts/validate_data.py` must pass before every push.

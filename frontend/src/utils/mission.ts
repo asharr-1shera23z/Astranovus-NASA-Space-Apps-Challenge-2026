@@ -19,7 +19,7 @@ export const SHORT_DIM: Record<string, string> = {
   D2_aridity: 'Dryness',
   D3_barren: 'Barren ground',
   D4_terrain: 'Terrain',
-  D5_rock: 'Rock / minerals',
+  D5_rock: 'Rock composition (proxy)',
   D6_ice: 'Ice (proxy)',
   D7_polar_light: 'Light extremes',
   D8_thermal_swing: 'Day-night swing',
@@ -73,8 +73,8 @@ export const formatCoords = (lat: number, lon: number): string =>
 export function regionsToMapSites(regions: Region[]): MapSite[] {
   return regions.map((r) => ({
     id: r.id,
-    name: r.region_name ?? r.location_label,
-    country: r.region_name ? formatCoords(r.lat, r.lon) : '',
+    name: r.location_label.split(' (')[0],
+    country: formatCoords(r.lat, r.lon),
     region: r.location_label,
     lat: r.lat,
     lon: r.lon,

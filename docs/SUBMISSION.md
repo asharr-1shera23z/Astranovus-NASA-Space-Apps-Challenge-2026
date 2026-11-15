@@ -22,27 +22,27 @@ MODIS Terra MOD11C3 / MOD13C2 / MOD10CM (collection 061), GPM IMERG V07B, NASA P
 Purpose-driven recommendations; data-unavailable states instead of invented results; proxies and partial-season data labelled; held-out validation against NASA-documented analog sites; no opaque model.
 
 ## Limitations (say these out loud)
-5° grid; MODIS/GPM cover a single year (2024); rock missing and terrain only 1-km relief; ice is a snow proxy; reference-site rules are drafts with partial evidence; results are candidate regions, not verified test sites; not an official NASA tool.
+2.5 degree grid (~280 km cells): candidate areas, not test sites; MODIS/GPM cover one year (2024); rock composition is an ASTER-based bare-ground proxy covering 13% of cells; terrain is 1 km relief (30 m only for top regions); ice is a snow-cover proxy; reference-site rules are drafts with partial evidence (32 of 49 rows supported, real LOLA/MOLA/Diviner values pending); results are not verified ground-test sites; not an official NASA tool.
 
 ## AI usage disclosure (suggested wording)
 "Code, documentation and parts of the data pipeline were developed with the assistance of Claude (Anthropic). Data sources, scientific choices and all results were reviewed by the team. The recommendation engine is a transparent rule-and-weight model, not a generative or black-box AI system."
 
-## Demo scenarios (real model outputs from the final 2.5° grid)
-**Moon — water-ice prospecting, reference site "Permanently shadowed crater floor"** (data state: partial; ice is a snow-cover proxy); marker = highest-scoring 2.5° cell of each region, regions bounded to 15°:
-1. Antarctica (81.2°S, 93.8°E): score 90.77, coverage 77 %, medium confidence, outside SRTM coverage (30 m terrain not verified)
-2. Antarctica (76.2°S, 11.2°E): score 84.42, coverage 77 %, medium confidence, 30 m terrain check not run for this region
-3. Antarctica (71.2°S, 146.2°E): score 80.74, coverage 77 %, medium confidence, 30 m terrain check not run for this region
-4. Antarctica (81.2°S, 91.2°W): score 77.94, coverage 77 %, medium confidence, 30 m terrain check not run for this region
-5. Greenland (71.2°N, 36.2°W): score 76.87, coverage 84 %, medium confidence, outside SRTM coverage (30 m terrain not verified)
+## Demo scenarios (real model outputs from the final grid)
+**Moon - water-ice prospecting, reference site "Permanently shadowed crater floor"** (data state: partial; ice is a snow-cover proxy); each marker is a 2.5 degree cell, regions bounded to 15 degrees:
+1. Antarctica (78.8°S, 43.8°E): score 90.43, coverage 82 %, medium confidence; outside SRTM coverage (30 m terrain not verified)
+2. Antarctica (76.2°S, 123.8°E): score 88.29, coverage 82 %, medium confidence; outside SRTM coverage (30 m terrain not verified)
+3. Antarctica (81.2°S, 101.2°W): score 78.0, coverage 82 %, medium confidence; outside SRTM coverage (30 m terrain not verified)
+4. Greenland (71.2°N, 36.2°W): score 77.72, coverage 82 %, medium confidence; outside SRTM coverage (30 m terrain not verified)
+5. Canadian Arctic, Canada (76.2°N, 121.2°W): score 76.56, coverage 100 %, high confidence; outside SRTM coverage (30 m terrain not verified)
 
-**Mars — geological sampling, reference site "Jezero crater delta"** (data state: partial; rock missing; terrain is 1-km relief); marker = highest-scoring 2.5° cell of each region, regions bounded to 15°:
-1. Gobi Desert (41.2°N, 91.2°E): score 95.16, coverage 76 %, medium confidence, SRTM 1° tile: flat, mean slope 2.21°
-2. Sahara Desert (23.8°N, 16.2°E): score 93.8, coverage 76 %, medium confidence, SRTM 1° tile: flat, mean slope 3.54°
-3. Sahara Desert (26.2°N, 33.8°E): score 92.57, coverage 76 %, medium confidence, 30 m terrain check not run for this region
-4. Arabian Peninsula (16.2°N, 46.2°E): score 91.55, coverage 76 %, medium confidence, 30 m terrain check not run for this region
-5. Sahara Desert (28.8°N, 1.2°W): score 90.35, coverage 76 %, medium confidence, 30 m terrain check not run for this region
+**Mars - geological sampling, reference site "Jezero crater delta"** (data state: partial; rock composition is a bare-ground proxy; terrain is 1 km relief); each marker is a 2.5 degree cell, regions bounded to 15 degrees:
+1. Taklamakan Desert, China (36.2°N, 86.2°E): score 90.73, coverage 76 %, medium confidence; SRTM 30 m check: moderate, mean slope 7.93 deg
+2. Iranian Plateau, Iran (33.8°N, 56.2°E): score 90.65, coverage 100 %, high confidence; SRTM 30 m check: flat, mean slope 4.88 deg
+3. Sahara Desert, Egypt (26.2°N, 33.8°E): score 90.53, coverage 100 %, high confidence; SRTM 30 m check: moderate, mean slope 9.38 deg
+4. Atacama Desert, Chile (23.8°S, 68.8°W): score 87.49, coverage 100 %, high confidence; SRTM 30 m check: flat, mean slope 4.39 deg
+5. Gobi Desert, Mongolia (43.8°N, 106.2°E): score 86.62, coverage 76 %, medium confidence; 30 m terrain check not run
 
-Re-run before recording: numbers change if the grid or profiles change. Validation: see `docs/VALIDATION.md` (small sample; indicative only).
+Re-run before recording: numbers change if the grid or profiles change. Validation: see `docs/VALIDATION.md` (small sample, wide intervals).
 
 ## Pitch narrative (≈3 min)
 1. "Where on Earth should we test for the Moon or Mars?" depends on *what* you test. 2. Walk the wizard (Moon → water ice → shadowed crater). 3. Show the map, the top region's

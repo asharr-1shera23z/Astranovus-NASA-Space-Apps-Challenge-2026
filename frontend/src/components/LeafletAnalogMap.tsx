@@ -31,6 +31,8 @@ interface LeafletAnalogMapProps {
   onOpenProfile?: (id: string) => void;
   heatmapPoints?: HeatmapPoint[];
   heatmapOpacity?: number;
+  /** If set, the selected marker is drawn with its true grid-cell footprint (degrees) to show spatial uncertainty. */
+  cellSizeDeg?: number;
   bodyTheme: 'Moon' | 'Mars';
   heightClass?: string;
 }
@@ -42,6 +44,7 @@ export function LeafletAnalogMap({
   onOpenProfile,
   heatmapPoints = [],
   heatmapOpacity = 0.65,
+  cellSizeDeg,
   bodyTheme,
   heightClass = 'h-[480px]',
 }: LeafletAnalogMapProps) {
@@ -51,6 +54,7 @@ export function LeafletAnalogMap({
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
   const heatmapLayerRef = useRef<L.LayerGroup | null>(null);
   const solarZonesLayerRef = useRef<L.LayerGroup | null>(null);
+  const footprintLayerRef = useRef<L.LayerGroup | null>(null);
   const prevSelectedRef = useRef<string | null>(null);
 
   const [cursorCoords, setCursorCoords] = useState<{ lat: number; lon: number } | null>(null);
@@ -82,6 +86,7 @@ export function LeafletAnalogMap({
     basemapLayerRef.current = L.layerGroup().addTo(map);
     solarZonesLayerRef.current = L.layerGroup().addTo(map);
     heatmapLayerRef.current = L.layerGroup().addTo(map);
+    footprintLayerRef.current = L.layerGroup().addTo(map);
     markersLayerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
 
@@ -283,6 +288,23 @@ export function LeafletAnalogMap({
     }
     prevSelectedRef.current = selectedId;
   }, [markers, selectedId, bodyTheme]);
+
+  // Footprint of the selected grid cell: the marker is a cell centre, not a point-sized site.
+  useEffect(() => {
+    const layer = footprintLayerRef.current;
+    if (!layer) return;
+    layer.clearLayers();
+    const sel = markers.find((m) => m.id === selectedId);
+    if (!sel || !cellSizeDeg) return;
+    const h = cellSizeDeg / 2;
+    L.rectangle(
+      [
+        [Math.max(-90, sel.lat - h), sel.lon - h],
+        [Math.min(90, sel.lat + h), sel.lon + h],
+      ],
+      { color: '#142B50', weight: 1.5, dashArray: '5 4', fillColor: '#0B5ED7', fillOpacity: 0.08, interactive: false }
+    ).addTo(layer);
+  }, [markers, selectedId, cellSizeDeg]);
 
   const activeBasemapBg = BASEMAP_CONFIGS[basemapStyle].backgroundColor;
 

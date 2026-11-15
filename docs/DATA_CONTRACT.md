@@ -75,3 +75,7 @@ MODIS/GPM-derived dimensions cover only the months listed in the metadata (curre
 New endpoints: `GET /experiments`, `GET /data_status`, `GET /mission/recommend?experiment=&target=&allow_unverified=`, `GET /validation`.
 `/health` additionally returns `data_source` and `is_synthetic_sample`. The API refuses to start without `earth_grid.csv` unless `ASTRANOVUS_ALLOW_SAMPLE=1`.
 Data state (UI layer): `unavailable` if a gate dimension has no data or under 50% of weighted criteria have data; `partial` if any dimension is missing or a proxy; else `ready`.
+
+## 9. Features file (v3)
+`earth_grid_features.csv` additionally holds: `dem_*` (elevation, relief, slope, roughness, `dem_source` SRTMGL30 or NSIDC-0422), `emis_delta_*` (silicate emissivity index per month and mean; `emis_delta_bare` for bare-ground cells), `snow_mean_valid_pct`, `perennial_snow_ice`, and per-cell `D3/D4/D5/D6/D8_missing_reason` text for every empty dimension value (empty means "no data" and always has a reason).
+`/mission/recommend` regions carry `lat/lon` equal to a real grid cell (the best cell), `centroid`, `country`, `surface` (coarse terrain/snow context), `terrain` (30 m check), and `missing_reason` on empty dimensions. The response also returns `n_cells_excluded_unverified` and `custom_weights`.

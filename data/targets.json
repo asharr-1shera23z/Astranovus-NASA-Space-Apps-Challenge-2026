@@ -24,7 +24,8 @@
       },
       "D5_rock": {
         "rule": "high",
-        "weight": 2
+        "weight": 0,
+        "_reason": "Set to 0 on 2026-11-15: D5 is now a mafic (silica-poor) composition proxy; NASA sample-science planning describes the south-polar candidate sites as feldspathic highlands with South Pole-Aitken breccias, far from basaltic terrain. Earlier weight was 2."
       },
       "D7_polar_light": {
         "rule": "high",
@@ -66,7 +67,8 @@
       },
       "D7_polar_light": {
         "rule": "high",
-        "weight": 2
+        "weight": 0,
+        "_reason": "Set to 0 on 2026-11-15: a permanently shadowed floor receives no direct sunlight (LROC/NASA: most of Shackleton's interior is in permanent shadow), so an Earth seasonal-insolation-swing proxy cannot represent it. Earlier weight was 2."
       }
     },
     "_note": "v0 DRAFT - Boy 2 refines from Moon/Mars Trek, LOLA, MOLA, Diviner"
@@ -98,7 +100,8 @@
       },
       "D8_thermal_swing": {
         "rule": "high",
-        "weight": 2
+        "weight": 2,
+        "_clarification": "Applies to the SURFACE above lava tubes (large diurnal swing: Diviner ~95-100 K to ~385-400 K at the equator). Pit interiors are thermally stable (~17 C), which is why they are studied; Earth cannot reproduce either value."
       }
     },
     "_note": "v0 DRAFT - Boy 2 refines from Moon/Mars Trek, LOLA, MOLA, Diviner"
@@ -196,7 +199,8 @@
       },
       "D5_rock": {
         "rule": "low",
-        "weight": 2
+        "weight": 0,
+        "_reason": "Set to 0 on 2026-11-15: D5 is a bare-ground composition proxy that cannot represent fine-grained sediment/'low rock'. Earlier weight was 2."
       },
       "D1_cold": {
         "rule": "high",
@@ -248,7 +252,8 @@
       },
       "D5_rock": {
         "rule": "low",
-        "weight": 2
+        "weight": 0,
+        "_reason": "Set to 0 on 2026-11-15: Martian dune sand is basaltic (olivine/pyroxene; USGS/JPL), so a 'low mafic' Earth rule (quartz-rich sand) would point the wrong way. Earlier weight was 2."
       },
       "D4_terrain": {
         "rule": "low",

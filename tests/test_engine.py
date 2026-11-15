@@ -69,3 +69,27 @@ def test_wide_plateau_is_split_into_bounded_regions():
     out = recommend(grid(rows), t, {}, [{"id": "D1_cold", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0, top_regions=20)
     assert len(out["regions"]) >= 3
     assert max(r["n_cells"] for r in out["regions"]) <= 7   # radius 15 deg on a 5 deg grid
+
+
+def test_confidence_reflects_coverage_and_region_size():
+    # cell with full coverage in a 3-cell region -> high; cell with 50% coverage alone -> low
+    rows = [{"cell_id": i, "lat": 0.0, "lon": float(i * 5), "D1_cold": 1.0, "D2_aridity": 1.0} for i in range(3)]
+    rows.append({"cell_id": 9, "lat": 60.0, "lon": 120.0, "D1_cold": 1.0, "D2_aridity": np.nan})
+    t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}, "D2_aridity": {"rule": "high", "weight": 1}}}
+    out = recommend(grid(rows), t, {}, [{"id": "D1_cold", "earth_source": "x"}, {"id": "D2_aridity", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0)
+    by_n = {r["n_cells"]: r for r in out["regions"]}
+    assert by_n[3]["confidence"] == "high" and by_n[1]["confidence"] == "low"
+
+
+def test_regions_merge_across_the_date_line():
+    rows = [{"cell_id": 0, "lat": 0.0, "lon": 178.0, "D1_cold": 1.0}, {"cell_id": 1, "lat": 0.0, "lon": -178.0, "D1_cold": 1.0}]
+    t = {"id": "T", "rules": {"D1_cold": {"rule": "high", "weight": 1}}}
+    out = recommend(grid(rows), t, {}, [{"id": "D1_cold", "earth_source": "x"}], min_coverage=0.0, top_pct=1.0)
+    assert len(out["regions"]) == 1 and out["regions"][0]["n_cells"] == 2
+
+
+def test_missing_dimension_never_penalises_score():
+    g = grid({"cell_id": [1, 2], "lat": [0.0, 30.0], "lon": [0.0, 0.0], "D1_cold": [0.8, 0.8], "D3_barren": [np.nan, 0.8]})
+    t = {"rules": {"D1_cold": {"rule": "high", "weight": 1}, "D3_barren": {"rule": "high", "weight": 1}}}
+    s = score_grid(g, t).set_index("cell_id")
+    assert s.score[1] == s.score[2] == 80.0 and s.coverage[1] == 0.5 and s.coverage[2] == 1.0

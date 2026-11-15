@@ -67,6 +67,7 @@ export interface Readiness {
   max_coverage: number;
   missing_dimensions: string[];
   proxy_dimensions: string[];
+  sparse_dimensions?: string[];
   gate_dimensions_missing: string[];
   notes: string[];
 }
@@ -149,6 +150,7 @@ export interface RegionDimension {
   similarity: number | null;
   data_status: DataStatusKind;
   temporal?: string;
+  missing_reason?: string | null;
   source: string;
 }
 
@@ -170,9 +172,18 @@ export interface Region {
   notes: string[];
   location_label: string;
   region_name: string | null;
+  country?: string | null;
   label_basis: string;
   dimensions: RegionDimension[];
   applications: string[];
+  surface: {
+    perennial_snow_ice: boolean | null;
+    snow_mean_valid_pct: number | null;
+    elevation_mean_m: number | null;
+    relief_1km_m: number | null;
+    slope_1km_deg: number | null;
+    dem_source: string | null;
+  } | null;
   terrain: {
     state: 'verified_local' | 'outside_coverage' | 'not_checked';
     note?: string;
@@ -199,6 +210,7 @@ export interface MissionResult {
   disclaimer: string;
   regions: Region[];
   n_cells_passed: number;
+  n_cells_excluded_unverified?: number;
   weights_used: Record<string, number>;
 }
 
@@ -255,12 +267,16 @@ export interface HeatmapPoint {
 }
 
 export interface ValidationStats {
-  n: number;
+  n_pairs: number;
+  n_sites: number;
   median_percentile: number;
+  median_ci95: [number, number] | null;
   top25_hit_rate: number;
   top50_hit_rate: number;
-  auc_vs_controls: number | null;
+  auc_vs_all_controls: number | null;
+  auc_vs_hard_controls: number | null;
   controls_median_percentile: number | null;
+  hard_controls_median_percentile: number | null;
 }
 
 export interface ValidationRow {
@@ -287,4 +303,6 @@ export interface ValidationResponse {
   dimensions_missing?: string[];
   rows?: ValidationRow[];
   hypotheses?: ValidationRow[];
+  diagnostics?: Array<{ site: string; target: string; percentile: number; coverage: number; missing: Record<string, string> }>;
+  grid_step_deg?: number;
 }

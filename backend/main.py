@@ -22,6 +22,8 @@ PURPOSES = {p["id"]: p for p in json.load(open(ROOT / "data/purposes.json"))}
 
 app = FastAPI(title="ASTRANOVUS API")
 _origins = [o.strip() for o in os.environ.get("ASTRANOVUS_CORS_ORIGINS", "*").split(",") if o.strip()]
+if os.environ.get("ASTRANOVUS_ENV") == "production" and "*" in _origins:
+    raise RuntimeError("ASTRANOVUS_ENV=production requires ASTRANOVUS_CORS_ORIGINS to list the frontend origin(s), not '*'.")
 app.add_middleware(CORSMiddleware, allow_origins=_origins, allow_methods=["GET", "POST"], allow_headers=["*"])
 
 
@@ -60,7 +62,8 @@ def score_custom(body: dict, min_score: float = 0, limit: int = 5000):
     return _clean(s)
 
 def _nearest(lat, lon):
-    i = ((GRID.lat - lat) ** 2 + (GRID.lon - lon) ** 2).idxmin()
+    dlon = (GRID.lon - lon + 180) % 360 - 180      # wrap across the date line
+    i = ((GRID.lat - lat) ** 2 + (dlon * np.cos(np.radians(lat))) ** 2).idxmin()
     return GRID.loc[i]
 
 @app.get("/site")

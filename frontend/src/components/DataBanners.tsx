@@ -35,7 +35,7 @@ export function DataCoverageStrip() {
       </span>
       <span>
         <strong className="text-[#177A3C]">{withData.length}/{dataStatus.n_dimensions} dimensions with data:</strong>{' '}
-        {withData.map((d) => dimLabel(d.id)).join(', ') || 'none'}
+        {withData.map((d) => `${dimLabel(d.id)}${d.cell_coverage < 0.9 ? ` (${Math.round(d.cell_coverage * 100)}% of cells)` : ''}`).join(', ') || 'none'}
       </span>
       {missing.length > 0 && (
         <span>

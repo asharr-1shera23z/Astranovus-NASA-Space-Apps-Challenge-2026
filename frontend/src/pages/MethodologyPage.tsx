@@ -30,7 +30,7 @@ export function MethodologyPage() {
           <li>The experiment you choose maps to a mission profile that multiplies those weights and adds hard gates (must-haves). Cells failing a gate are dropped.</li>
           <li>Score = 100 × Σ(weight × similarity) / Σ(weight) over dimensions that have data. Coverage is the share of weight that had data.</li>
           <li>The top 15% of passing cells are merged into regions when neighbouring. Confidence is high when coverage ≥ 85% and the region has ≥ 3 cells, medium when coverage ≥ 60%, otherwise low.</li>
-          <li>Data-unavailable rule (ASTRANOVUS UI layer): if a gate dimension has no data at all, or under 50% of the weighted criteria have data, no ranking is shown by default. A clearly labelled provisional view can be requested.</li>
+          <li>Data-unavailable rule (ASTRANOVUS UI layer): if a gate dimension has no data at all, or under 50% of the weighted criteria have data, no ranking is shown by default. An experiment is labelled partial (never ready) whenever a used dimension is missing, a proxy, or defined in under half of all cells. A clearly labelled provisional view can be requested.</li>
         </ol>
         <p className="text-xs text-[#68788F]">All scoring runs in the Python engine (model/scoring_core.py, model/recommend.py). The web app only displays its output.</p>
       </section>
@@ -103,13 +103,14 @@ export function MethodologyPage() {
               positives are the headline; no rules were tuned on these sites.
             </p>
             {val.heldout && (
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
                 {[
-                  ['Pairs', val.heldout.n],
-                  ['Median percentile', val.heldout.median_percentile],
+                  ['Held-out sites / pairs', `${val.heldout.n_sites} / ${val.heldout.n_pairs}`],
+                  ['Median percentile', `${val.heldout.median_percentile}${val.heldout.median_ci95 ? ` (95% CI ${val.heldout.median_ci95[0]}–${val.heldout.median_ci95[1]})` : ''}`],
                   ['Top-25% hits', val.heldout.top25_hit_rate],
-                  ['AUC vs controls', val.heldout.auc_vs_controls ?? 'n/a'],
-                  ['Controls median', val.heldout.controls_median_percentile ?? 'n/a'],
+                  ['AUC vs all controls', val.heldout.auc_vs_all_controls ?? 'n/a'],
+                  ['AUC vs hard controls', val.heldout.auc_vs_hard_controls ?? 'n/a'],
+                  ['Hard controls median', val.heldout.hard_controls_median_percentile ?? 'n/a'],
                 ].map(([k, v]) => (
                   <div key={String(k)} className="bg-[#F4F8FF] border border-[#E1E8F0] rounded-lg px-3 py-2">
                     <div className="text-[10px] text-[#68788F]">{k}</div>
@@ -118,9 +119,21 @@ export function MethodologyPage() {
                 ))}
               </div>
             )}
+            {val.diagnostics && val.diagnostics.length > 0 && (
+              <div className="text-xs text-[#142B50] space-y-1">
+                <div className="font-semibold">Weakly ranked analogs (diagnosed, not tuned away):</div>
+                <ul className="list-disc pl-5 text-[#68788F]">
+                  {val.diagnostics.map((d) => (
+                    <li key={d.site + d.target}>
+                      {d.site} → {d.target}: percentile {d.percentile}, coverage {d.coverage}
+                      {Object.keys(d.missing).length > 0 && `; missing ${Object.keys(d.missing).join(', ')}`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <p className="text-[11px] text-[#A15C00]">
-              Small sample, easy controls (humid lowlands). Missing terrain and rock data ({val.dimensions_missing?.join(', ')}) limit what this test can show. It is
-              indicative, not proof.
+              Small sample with wide intervals; controls include hard negatives (cold forests, dry vegetated land). Ice and composition are proxies and rock composition exists only for bare ground. Indicative, not proof.
             </p>
           </>
         )}

@@ -127,7 +127,36 @@ export function RegionDetail({ region: r, result, inCompare, onToggleCompare, on
         </div>
 
         <div className="space-y-2">
-          <h3 className="font-display font-bold text-sm text-[#142B50]">Terrain check (NASA SRTM, local 1° tile)</h3>
+          <h3 className="font-display font-bold text-sm text-[#142B50]">Surface and terrain context</h3>
+          {r.surface ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                {[
+                  ['Mean elevation (1 km data)', r.surface.elevation_mean_m === null ? 'n/a' : `${r.surface.elevation_mean_m} m`],
+                  ['Relief in cell (P95-P5, 1 km)', r.surface.relief_1km_m === null ? 'n/a' : `${r.surface.relief_1km_m} m`],
+                  ['Mean 1 km slope', r.surface.slope_1km_deg === null ? 'n/a' : `${r.surface.slope_1km_deg}°`],
+                  ['Elevation source', r.surface.dem_source ?? 'n/a'],
+                ].map(([k, v]) => (
+                  <div key={String(k)} className="bg-[#F4F8FF] border border-[#E1E8F0] rounded-lg px-3 py-2">
+                    <div className="text-[10px] text-[#68788F]">{k}</div>
+                    <div className="font-mono font-semibold text-[#142B50]">{v}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[11px] text-[#68788F]">
+                {r.surface.perennial_snow_ice ? (
+                  <strong className="text-[#0B5ED7]">Perennial snow/ice cover (MODIS snow-cover flag; says nothing about glaciers or subsurface ice). </strong>
+                ) : (
+                  'No perennial snow/ice flag. '
+                )}
+                {r.surface.snow_mean_valid_pct !== null && <>Mean snow cover over observed months: {r.surface.snow_mean_valid_pct}%. </>}
+                These are coarse values averaged over the whole grid cell; they are not site measurements.
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-[#68788F]">No surface context available for this cell.</p>
+          )}
+          <h3 className="font-display font-bold text-sm text-[#142B50] pt-2">High-resolution terrain check (NASA SRTM 30 m, local 1° tile)</h3>
           {r.terrain.state === 'verified_local' ? (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
               {[

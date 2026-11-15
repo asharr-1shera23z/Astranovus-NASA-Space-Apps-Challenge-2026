@@ -1,4 +1,5 @@
-"""Approximate, human-readable geographic labels for a lat/lon.
+"""Human-readable geographic labels for a lat/lon: country (Natural Earth 110m polygons, public domain) plus an
+approximate named region (coarse bounding boxes).
 
 This is DISPLAY metadata only (never used in scoring). Labels come from coarse bounding boxes of
 well-known land regions; when several boxes contain a point the smallest box wins. Anything not
@@ -52,6 +53,57 @@ _BOXES: list[tuple[float, float, float, float, str]] = [
 ]
 
 
+import json
+import math
+import pathlib
+
+_GEO = pathlib.Path(__file__).resolve().parents[1] / "data/geo/ne_110m_admin_0_countries.geojson"
+_COUNTRIES: list | None = None
+
+
+def _load():
+    global _COUNTRIES
+    if _COUNTRIES is None:
+        _COUNTRIES = []
+        if _GEO.exists():
+            for f in json.load(open(_GEO, encoding="utf-8"))["features"]:
+                g = f["geometry"]
+                polys = g["coordinates"] if g["type"] == "MultiPolygon" else [g["coordinates"]]
+                for poly in polys:
+                    ring = poly[0]
+                    lons = [p[0] for p in ring]
+                    lats = [p[1] for p in ring]
+                    _COUNTRIES.append((f["properties"].get("ADMIN") or f["properties"].get("NAME"), (min(lons), max(lons), min(lats), max(lats)), ring))
+    return _COUNTRIES
+
+
+def _inside(lon, lat, ring):
+    c = False
+    j = len(ring) - 1
+    for i in range(len(ring)):
+        xi, yi = ring[i][0], ring[i][1]
+        xj, yj = ring[j][0], ring[j][1]
+        if (yi > lat) != (yj > lat) and lon < (xj - xi) * (lat - yi) / (yj - yi + 1e-15) + xi:
+            c = not c
+        j = i
+    return c
+
+
+def country_of(lat: float, lon: float):
+    """(country, how) where how is 'inside' or 'near' (nearest boundary vertex within 4 degrees: coast/offshore cell)."""
+    best, bd = None, 99.0
+    for name, (x0, x1, y0, y1), ring in _load():
+        if x0 <= lon <= x1 and y0 <= lat <= y1 and _inside(lon, lat, ring):
+            return name, "inside"
+    for name, _, ring in _load():
+        for x, y in ring[::2]:
+            dx = ((x - lon + 180) % 360 - 180) * math.cos(math.radians(lat))
+            d = math.hypot(dx, y - lat)
+            if d < bd:
+                best, bd = name, d
+    return (best, "near") if best is not None and bd <= 4.0 else (None, "none")
+
+
 def label_for(lat: float, lon: float) -> dict:
     best = None
     best_area = None
@@ -60,11 +112,15 @@ def label_for(lat: float, lon: float) -> dict:
             area = (la1 - la0) * (lo1 - lo0)
             if best_area is None or area < best_area:
                 best, best_area = name, area
+    country, how = country_of(lat, lon)
     ns = "N" if lat >= 0 else "S"
     ew = "E" if lon >= 0 else "W"
     coords = f"{abs(lat):.1f}°{ns}, {abs(lon):.1f}°{ew}"
-    if best:
-        return {"label": f"{best} ({coords})", "region_name": best,
-                "basis": "approximate named region (bounding box)"}
-    return {"label": f"Land region near {coords}", "region_name": None,
-            "basis": "coordinates only (no named-region match)"}
+    region = best if best and best != country else None
+    cname = f"near {country}" if how == "near" else country
+    parts = [x for x in (region, cname) if x]
+    label = f"{', '.join(parts)} ({coords})" if parts else f"Open land near {coords}"
+    basis = "country from Natural Earth 110m boundaries" + (" (nearest coast)" if how == "near" else "") if country else "coordinates only"
+    if region:
+        basis += "; region name is an approximate bounding box"
+    return {"label": label, "region_name": region, "country": country, "basis": basis}

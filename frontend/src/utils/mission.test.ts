@@ -6,7 +6,7 @@ import { buildRegionsCsv, regionsToMapSites, suitabilitySummary } from './missio
 const region = {
   id: 'R1', rank: 1, lat: 10, lon: 20, best_cell: { lat: 10, lon: 20 }, n_cells: 3, best_score: 80.5, mean_score: 75,
   coverage: 0.6, confidence: 'medium', why_match: [], weak_points: [], missing_data: ['D3_barren'], notes: [],
-  location_label: 'Test (10.0°N, 20.0°E)', region_name: 'Test', label_basis: 'approximate', applications: [], terrain: { state: 'not_checked' },
+  location_label: 'Test (10.0°N, 20.0°E)', region_name: 'Test', label_basis: 'approximate', applications: [], terrain: { state: 'not_checked' }, surface: null,
   dimensions: [
     { dimension: 'D1_cold', name: 'Cold', percentile: 0.9, rule: 'high', weight: 2, similarity: 0.9, data_status: 'derived', source: '' },
     { dimension: 'D3_barren', name: 'Barren ground', percentile: null, rule: 'high', weight: 3, similarity: null, data_status: 'missing', source: '' },

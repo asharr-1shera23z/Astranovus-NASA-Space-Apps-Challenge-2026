@@ -103,8 +103,10 @@ export function HomePage({ onNavigate }: { onNavigate: (page: PageId) => void })
             },
             {
               label: 'Dimensions with real data',
-              value: m.dataStatus ? `${m.dataStatus.n_dimensions_with_data} of ${m.dataStatus.n_dimensions}` : '–',
-              text: m.dataStatus ? `${m.dataStatus.grid.cells} Earth land cells loaded` : 'Waiting for the backend',
+              value: m.dataStatus
+                ? `${m.dataStatus.dimensions.filter((d) => d.cell_coverage >= 0.9).length} full · ${m.dataStatus.dimensions.filter((d) => d.cell_coverage > 0 && d.cell_coverage < 0.9).length} partial`
+                : '–',
+              text: m.dataStatus ? `${m.dataStatus.grid.cells} Earth land cells (${m.dataStatus.grid.step_deg}°). Partial = defined only where the data allows` : 'Waiting for the backend',
               Icon: Layers,
             },
             {

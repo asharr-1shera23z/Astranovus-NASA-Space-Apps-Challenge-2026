@@ -1,3 +1,5 @@
+> **HISTORICAL DOCUMENT.** Written when the project moved from a chat; many statements below (missing parsers, 629-cell grid, no terrain, etc.) are outdated. Current facts: `docs/PROJECT_STATUS.md`.
+
 # PROJECT_HANDOFF.md — ASTRANOVUS (NASA Space Apps 2026)
 
 **Purpose of this document:** This project is being migrated from a claude.ai chat conversation (where files were exchanged manually, one at a time, because live local file access could never be established) to Claude Code Desktop, which has direct read/write access to the local project folder. This document is the complete handoff so a new agent (or a human) can continue without re-reading the old chat.

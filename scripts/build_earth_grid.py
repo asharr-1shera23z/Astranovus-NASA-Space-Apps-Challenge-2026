@@ -65,6 +65,16 @@ def valid_range(attrs):
     return float(v[0]), float(v[1])
 
 
+def year_from_name(path: pathlib.Path) -> int:
+    m = re.search(r"\.A(\d{4})\d{3}\.", path.name)
+    if m:
+        return int(m.group(1))
+    m = re.search(r"IMERG\.(\d{4})\d{4}-", path.name)
+    if m:
+        return int(m.group(1))
+    raise ValueError(f"cannot parse year from {path.name}")
+
+
 def month_from_name(path: pathlib.Path) -> int:
     n = path.name
     m = re.search(r"\.A(\d{4})(\d{3})\.", n)           # MODIS: AYYYYDDD (first day of month)
@@ -110,6 +120,8 @@ def block_mean(values: np.ndarray, land: np.ndarray, cells: pd.DataFrame, res: f
 def process_lst(cells, step):
     out, files = {}, []
     for f in sorted((RAW / "MOD11C3").glob("*.hdf")):
+        if year_from_name(f) != 2024:
+            continue
         m = month_from_name(f)
         day, a = read_hdf4(f, "LST_Day_CMG")
         night, _ = read_hdf4(f, "LST_Night_CMG")
@@ -134,6 +146,8 @@ def process_lst(cells, step):
 def process_ndvi(cells, step):
     out, files = {}, []
     for f in sorted((RAW / "MOD13C2").glob("*.hdf")):
+        if year_from_name(f) != 2024:
+            continue
         m = month_from_name(f)
         nd, a = read_hdf4(f, "CMG 0.05 Deg Monthly NDVI")
         rel, _ = read_hdf4(f, "CMG 0.05 Deg Monthly pixel reliability")
@@ -149,23 +163,57 @@ def process_ndvi(cells, step):
 
 
 def process_snow(cells, step):
-    out, files = {}, []
+    """MOD10CM v061 monthly snow cover for every downloaded year -> per-calendar-month climatology
+    (mean over the years that have a valid cell value). Returns {month: {snow_pct, n_years}} and file/year info."""
+    per_month: dict[int, list] = {}
+    files, years = [], set()
     for f in sorted((RAW / "MOD10CM").glob("*.hdf")):
-        m = month_from_name(f)
+        m, y = month_from_name(f), year_from_name(f)
         sc, a = read_hdf4(f, "Snow_Cover_Monthly_CMG")
         raw = sc.astype(np.float64)
         v = np.where(raw <= 100, raw, np.nan)                            # 0-100 percent; 211/250/253/254/255 are codes
         land = raw != 254                                                # 254 = water mask
         mean, frac = block_mean(v, land, cells, 0.05, step)
-        out[m] = {"snow_pct": mean, "valid_frac": frac}
-        files.append({"file": f.name, "month": m})
-    return out, files
+        per_month.setdefault(m, []).append(mean)
+        files.append({"file": f.name, "year": y, "month": m})
+        years.add(y)
+    out = {}
+    for m, lst_ in per_month.items():
+        stack = np.vstack(lst_)
+        with np.errstate(all="ignore"):
+            clim = np.nanmean(stack, axis=0)
+        out[m] = {"snow_pct": clim, "n_years": np.sum(~np.isnan(stack), axis=0)}
+    return out, files, sorted(years)
+
+
+def process_aster(cells, step):
+    """NASA ASTER GED v4.1 monthly 0.05 deg (AG5KMMOH). Emissivity SDS (5, 3600, 7200) uint8 for ASTER TIR bands 10-14
+    (8.3-11.3 um): value = raw * 0.002 + 0.49, fill 0, valid 1-255. QualityFlag: 0 land, 1 filled value, 2 ocean.
+    Silicate (Si-O) bare ground depresses emissivity in bands 10-12 (~8.1-9.3 um) relative to bands 13-14 (~10.3-11.7 um):
+        contrast = mean(E13, E14) - mean(E10, E11, E12)
+    is large for silica-rich ground (quartz sand, granite) and ~0 for basalt. Pixels are used only if land, not
+    gap-filled, all five bands valid and ASTER NDVI <= 0.2 (bare). Returns (per-cell mean contrast, valid fraction, file)."""
+    import h5py
+    fs = sorted((RAW / "AG5KMMOH").glob("*.h5"))
+    if not fs:
+        return None
+    with h5py.File(fs[0], "r") as h:
+        em = h["SDS/Emissivity"][:].astype(np.float64)
+        qf = h["SDS/QualityFlag"][:]
+        nd = h["SDS/NDVI"][:]
+    e = em * 0.002 + 0.49
+    ok = (em >= 1).all(axis=0) & (qf == 0) & (nd <= 200)
+    contrast = np.where(ok, (e[3] + e[4]) / 2 - (e[0] + e[1] + e[2]) / 3, np.nan)
+    mean, frac = block_mean(contrast, qf != 2, cells, 0.05, step)
+    return mean, frac, fs[0].name
 
 
 def process_gpm(cells, step):
     import h5py
     out, files = {}, []
     for f in sorted((RAW / "GPM_3IMERGM").glob("*.HDF5")):
+        if year_from_name(f) != 2024:
+            continue
         m = month_from_name(f)
         with h5py.File(f, "r") as h:
             ds = h["Grid/precipitation"]
@@ -205,6 +253,7 @@ def process_dem(cells, step):
         return cache[name], ul_lon, ul_lat
 
     out = {k: np.full(len(cells), np.nan) for k in ("elev_mean_m", "relief_m", "slope_mean_deg", "rough_std_m", "valid_frac")}
+    out["source"] = np.full(len(cells), "", dtype=object)
     for i, r in enumerate(cells.itertuples()):
         dem, ul_lon, ul_lat = tile(r.lon, r.lat)
         if dem is None or r.lat < -60:
@@ -228,7 +277,74 @@ def process_dem(cells, step):
         out["relief_m"][i] = np.percentile(v, 95) - np.percentile(v, 5)
         out["rough_std_m"][i] = v.std()
         out["slope_mean_deg"][i] = np.nanmean(slope)
+        out["source"][i] = "SRTMGL30"
+    ant = process_antarctic_dem(cells, step, out)
+    if ant:
+        files.append(ant)
     return out, sorted(files)
+
+
+def process_antarctic_dem(cells, step, out):
+    """NSIDC-0422: Antarctic 1 km DEM (ERS-1 radar + ICESat laser, kriged), float32 little-endian, 5601 x 5601,
+    Polar Stereographic South (true-scale lat -71, lon_0 0), upper-left corner (-2800500, 2800500) m, nodata -999.
+    Used ONLY for cells south of 60S (no SRTM there). Coverage ends near 86S, so the polar hole stays empty."""
+    f = RAW / "NSIDC0422" / "krigged_dem_nsidc.bin"
+    if not f.exists():
+        return None
+    from pyproj import Transformer
+    a = np.fromfile(f, dtype="<f4").reshape(5601, 5601).astype(np.float64)
+    a[a <= -900] = np.nan
+    gy, gx = np.gradient(a, 1000.0)
+    slope = np.degrees(np.arctan(np.hypot(gx, gy)))
+    tr = Transformer.from_crs("EPSG:4326", "+proj=stere +lat_0=-90 +lat_ts=-71 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m", always_xy=True)
+    n = 40
+    for i, r in enumerate(cells.itertuples()):
+        if r.lat >= -60:
+            continue
+        la = np.linspace(r.lat - step / 2 + step / (2 * n), r.lat + step / 2 - step / (2 * n), n)
+        lo = np.linspace(r.lon - step / 2 + step / (2 * n), r.lon + step / 2 - step / (2 * n), n)
+        LA, LO = np.meshgrid(la, lo, indexing="ij")
+        x, y = tr.transform(LO.ravel(), LA.ravel())
+        col = np.floor((x + 2800500) / 1000).astype(int)
+        row = np.floor((2800500 - y) / 1000).astype(int)
+        inside = (col >= 0) & (col < 5601) & (row >= 0) & (row < 5601)
+        v = np.full(len(col), np.nan)
+        sl = np.full(len(col), np.nan)
+        v[inside] = a[row[inside], col[inside]]
+        sl[inside] = slope[row[inside], col[inside]]
+        ok = np.isfinite(v)
+        out["valid_frac"][i] = ok.mean()
+        if ok.mean() < MIN_VALID_FRACTION:
+            continue
+        vv = v[ok]
+        out["elev_mean_m"][i] = vv.mean()
+        out["relief_m"][i] = np.percentile(vv, 95) - np.percentile(vv, 5)
+        out["rough_std_m"][i] = vv.std()
+        out["slope_mean_deg"][i] = np.nanmean(sl)
+        out["source"][i] = "NSIDC-0422"
+    return f.name
+
+
+def process_emissivity(cells, step):
+    """MOD11C3 v061 band emissivities (Emis_29 8.4-8.7 um, Emis_31 10.8-11.3 um, Emis_32 11.8-12.3 um).
+    value = raw * 0.002 + 0.49, fill 0 (from the file attributes). Silicate (Si-O) surfaces depress emissivity near
+    8.5 um relative to 11-12 um, so  delta = mean(E31, E32) - E29  is larger for silica-rich bare ground and small for
+    silica-poor (mafic, basalt-like) ground. Returns the per-month cell means of delta."""
+    out = {}
+    for f in sorted((RAW / "MOD11C3").glob("*.hdf")):
+        if year_from_name(f) != 2024:
+            continue
+        m = month_from_name(f)
+        e = {}
+        for b in ("29", "31", "32"):
+            raw, a = read_hdf4(f, f"Emis_{b}")
+            raw = raw.astype(np.float64)
+            e[b] = np.where(raw >= 1, raw * float(a["scale_factor"]) + float(a["add_offset"]), np.nan)
+        pland, _ = read_hdf4(f, "Percent_land_in_grid")
+        delta = (e["31"] + e["32"]) / 2 - e["29"]
+        mean, frac = block_mean(delta, pland > 0, cells, 0.05, step)
+        out[m] = mean
+    return out
 
 
 def pct(series: pd.Series, invert=False) -> pd.Series:
@@ -266,9 +382,11 @@ def main():
     print(f"{len(cells)} cells at {step} deg")
 
     dem, dem_files = process_dem(cells, step)
+    emis = process_emissivity(cells, step)
+    aster = process_aster(cells, step)
     lst, lst_files = process_lst(cells, step)
     ndvi, ndvi_files = process_ndvi(cells, step)
-    snow, snow_files = process_snow(cells, step)
+    snow, snow_files, snow_years = process_snow(cells, step)
     gpm, gpm_files = process_gpm(cells, step)
 
     feat = cells.copy()
@@ -282,6 +400,8 @@ def main():
 
     for k, v in dem.items():
         feat[f"dem_{k}"] = v
+    for m in sorted(emis):
+        feat[f"emis_delta_m{m:02d}"] = emis[m]
 
     # --- derived physical features
     n_months = len(lst)
@@ -296,6 +416,22 @@ def main():
     feat["lst_mean_K"] = _lm.mean(axis=1).where(_lm.notna().sum(axis=1) >= 2 * min_months)
     feat["precip_mm_day_mean"] = feat[cols("precip_mm_day")].mean(axis=1).where(feat[cols("precip_mm_day")].notna().sum(axis=1) >= min_months)
 
+    ecols = cols("emis_delta")
+    feat["emis_delta_mean"] = feat[ecols].mean(axis=1).where(feat[ecols].notna().sum(axis=1) >= 6)
+    scols = cols("snow_pct")
+    feat["snow_mean_valid_pct"] = feat[scols].mean(axis=1)
+    # perennial snow/ice flag: snow cover >= 50 % in every month that has an observation, with >= 6 observed months
+    feat["perennial_snow_ice"] = ((feat[scols].min(axis=1) >= 50) & (feat["snow_valid_months"] >= 6)).astype(int)
+    bare = (feat["ndvi_peak"] <= 0.2) & (feat["snow_peak_pct"].fillna(0) <= 20)
+    feat["emis_delta_bare"] = feat["emis_delta_mean"].where(bare)
+    if aster is not None:
+        # ice/snow emissivity is not rock composition: drop cells whose climatological snow peak is >= 50 %
+        feat["aster_silica_contrast"] = pd.Series(aster[0], index=feat.index).where(feat["snow_peak_pct"].fillna(0) < 50)
+        feat["aster_valid_frac"] = aster[1]
+        # independent cross-check of the two composition indices (MODIS vs ASTER) on cells where both exist
+        both = feat[["aster_silica_contrast", "emis_delta_bare"]].dropna()
+        aster_vs_modis = {"n": int(len(both)), "spearman": round(float(both.corr(method="spearman").iloc[0, 1]), 3)} if len(both) > 10 else None
+
     # --- dimensions
     out = base.copy()
     out["D3_barren"] = pct(feat["ndvi_peak"], invert=True).values
@@ -303,9 +439,23 @@ def main():
     power_d8 = base["D8_thermal_swing"].copy()
     out["D8_thermal_swing"] = pct(feat["lst_dtr_K_mean"]).values
     out["D4_terrain"] = pct(feat["dem_relief_m"]).values       # landscape relief within the cell (P95-P5 of 1 km elevation)
-    out["D5_rock"] = np.nan
+    if aster is not None:
+        out["D5_rock"] = pct(feat["aster_silica_contrast"], invert=True).values   # high = silica-poor (mafic-like) bare ground
+    else:
+        out["D5_rock"] = pct(feat["emis_delta_bare"], invert=True).values
     out = out[["cell_id", "lat", "lon"] + DIMS]
 
+    def reason(dim, cond_list):
+        r = pd.Series("", index=feat.index, dtype=object)
+        for cond, text in cond_list:
+            r = r.mask((r == "") & cond & out[dim].isna(), text)
+        return r.mask((r == "") & out[dim].isna(), "no valid observations passed the quality rules")
+    snowy = feat["snow_peak_pct"].fillna(0) >= 50
+    feat["D3_missing_reason"] = reason("D3_barren", [(snowy, "snow/ice-covered surface: MODIS flags vegetation-index pixels as snow/ice, so barren ground is undefined")])
+    feat["D4_missing_reason"] = reason("D4_terrain", [(feat["lat"] < -86, "south of the Antarctic DEM coverage (about 86S)"), (feat["lat"] < -60, "no usable elevation data")])
+    feat["D5_missing_reason"] = reason("D5_rock", [(snowy, "snow/ice-covered: the composition proxy only applies to bare ground"), (feat["ndvi_peak"] > 0.2, "vegetated: the composition proxy only applies to bare ground"), (feat["lat"] < -60, "too little bare, non-gap-filled ASTER land pixels (Antarctic rock outcrops are tiny at this scale)")])
+    feat["D6_missing_reason"] = reason("D6_ice", [])
+    feat["D8_missing_reason"] = reason("D8_thermal_swing", [(feat["lat"].abs() > 60, "too many polar-night months without a valid day-night pair")])
     feat["D8_power_air_dtr_pct_v1"] = power_d8.values   # previous POWER air-temperature-range dimension, kept for traceability
     for d in ("D1_cold", "D2_aridity", "D7_polar_light"):
         feat[f"{d}_power_pct"] = base[d].values
@@ -319,6 +469,7 @@ def main():
         "D2_aridity (POWER annual precip) vs GPM IMERG mean precip over available months (inverted)": sp(base["D2_aridity"], pct(feat["precip_mm_day_mean"], invert=True)),
         "D8 MODIS LST day-night range vs POWER air-temperature range (v1 D8)": sp(out["D8_thermal_swing"], power_d8),
         "D6 MODIS snow peak vs POWER months-below-0C proxy (v1 D6, if any)": None,
+        "D5 ASTER GED silica contrast vs MODIS MOD11C3 emissivity contrast (bare cells in both)": aster_vs_modis if aster is not None else None,
     }
 
     s2p = ROOT / "data/processed/stage2.json"
@@ -358,17 +509,18 @@ def main():
             "SRTMGL30": {"version": "002", "doi": "10.5067/MEaSUREs/SRTM/SRTMGL30.002", "files": dem_files, "variables": ["elevation (int16, m)"], "note": "~1 km; GTOPO30-filled outside 60N-56S"},
             "MOD11C3": {"version": "061", "doi": "10.5067/MODIS/MOD11C3.061", "files": lst_files, "variables": ["LST_Day_CMG", "LST_Night_CMG", "Percent_land_in_grid"], "scale": "0.02 K"},
             "MOD13C2": {"version": "061", "doi": "10.5067/MODIS/MOD13C2.061", "files": ndvi_files, "variables": ["CMG 0.05 Deg Monthly NDVI", "CMG 0.05 Deg Monthly pixel reliability"], "scale": "1/10000"},
-            "MOD10CM": {"version": "061", "doi": "10.5067/MODIS/MOD10CM.061", "files": snow_files, "variables": ["Snow_Cover_Monthly_CMG"], "scale": "percent"},
+            "MOD10CM": {"version": "061", "doi": "10.5067/MODIS/MOD10CM.061", "files": [f"{x['year']}-{x['month']:02d}" for x in snow_files], "years": snow_years, "variables": ["Snow_Cover_Monthly_CMG"], "scale": "percent", "note": "multi-year monthly climatology; a few source months are missing"},
+            "AG5KMMOH": {"version": "041", "files": [aster[2]] if aster is not None else [], "doi": "10.5067/ASTER/AG5KMMOH.041", "variables": ["SDS/Emissivity (bands 10-14)", "SDS/QualityFlag", "SDS/NDVI"], "note": "one monthly file (July 2014); emissivity of bare ground is near-static"},
             "GPM_3IMERGM": {"version": "V07B", "doi": "10.5067/GPM/IMERG/3B-MONTH/07", "files": gpm_files, "variables": ["Grid/precipitation"], "scale": "mm/hr"},
             "NASA_POWER": {"source": "climatology point API cache data/raw/power_cache.json", "parameters": "T2M, T2M_MAX, T2M_MIN, PRECTOTCORR, ALLSKY_SFC_SW_DWN"},
         },
         "dimensions": {
             "D1_cold": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER T2M (2 m AIR temperature, not land-surface temperature), inverted percentile"},
             "D2_aridity": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER PRECTOTCORR, inverted percentile"},
-            "D3_barren": {"status": "derived", "temporal": tshort, "source": "MODIS MOD13C2 v061 NDVI, peak monthly NDVI (inverted percentile). Low NDVI also occurs over snow/ice and does not by itself characterise geology."},
-            "D4_terrain": {"status": "derived", "temporal": "static (SRTM, 2000)", "source": "NASA SRTMGL30 v002 (~1 km; GTOPO30-filled outside 60N-56S): relief = P95 minus P5 of 1-km elevation inside the cell, percentile. Landscape-scale relief only, not rover-scale slope."},
-            "D5_rock": {"status": "missing", "source": "No lithology/mineral dataset integrated (a categorical rock type will not be turned into a percentile without a documented method)"},
-            "D6_ice": {"status": "proxy", "temporal": tshort, "source": "MODIS MOD10CM v061 snow cover extent, peak of monthly cell means. A snow-cover proxy; NOT permafrost, ground ice or subsurface ice."},
+            "D3_barren": {"status": "derived", "temporal": tshort, "source": "MODIS MOD13C2 v061 NDVI, peak monthly NDVI (inverted percentile). Low NDVI also occurs over bare soil, sand and rock alike. Snow/ice-covered cells are left empty (MODIS flags those pixels), with the reason stored per cell."},
+            "D4_terrain": {"status": "derived", "temporal": "static (SRTM 2000; Antarctic DEM 1994-2008)", "source": "Relief = P95 minus P5 of ~1 km elevation inside the cell, percentile. North of 60S: NASA SRTMGL30 v002 (LP DAAC documentation is inconsistent about its northern extent, so values north of 60N are of unconfirmed provenance and lower confidence). South of 60S: NSIDC-0422 Antarctic 1 km DEM (ERS-1 radar + ICESat laser, kriged; smoother than SRTM, coverage ends near 86S). Landscape-scale relief only, not rover-scale slope; 30 m SRTM check exists only for top regions."},
+            "D5_rock": {"status": "proxy", "temporal": "static (ASTER GED v4.1, July 2014 monthly file)", "source": "NASA ASTER Global Emissivity Dataset v4.1 (AG5KMMOH): silicate contrast = mean(E13,E14) - mean(E10,E11,E12) over bare, land, non-gap-filled 0.05 deg pixels; D5 = inverted percentile, so high = silica-poor (mafic, basalt-like). A thermal-infrared surface-composition proxy for bare ground only: NOT rock exposure, NOT mineral identification, NOT lithology (GLiM and EMIT not integrated). MODIS MOD11C3 emissivity is kept as an independent cross-check."},
+            "D6_ice": {"status": "proxy", "temporal": f"multi-year monthly climatology {min(snow_years)}-{max(snow_years)} ({len(snow_years)} years)", "source": "MODIS MOD10CM v061 snow cover extent, peak of the per-calendar-month climatology over all downloaded years. A snow-cover proxy; NOT glacier presence, permafrost, ground ice or subsurface water ice. A separate perennial_snow_ice flag (snow >= 50 % in every observed month, >= 6 months) is stored in earth_grid_features.csv and is not part of the score."},
             "D7_polar_light": {"status": "derived", "temporal": "annual climatology", "source": "NASA POWER ALLSKY_SFC_SW_DWN seasonal swing. A terrestrial seasonal-insolation proxy; does not reproduce lunar illumination."},
             "D8_thermal_swing": {"status": "derived", "temporal": tshort, "source": f"MODIS MOD11C3 v061 land-surface-temperature day minus night, mean over valid months, requiring at least {min_months} of {n_months} valid months."},
         },

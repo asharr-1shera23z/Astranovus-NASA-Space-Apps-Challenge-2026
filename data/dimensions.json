@@ -24,21 +24,21 @@
     "id": "D4_terrain",
     "name": "Terrain roughness",
     "description": "Slope / relief within the cell",
-    "earth_source": "NASA SRTMGL1 30 m -> slope & relief [PRIMARY]",
+    "earth_source": "NASA SRTMGL30 (~1 km) and NSIDC-0422 Antarctic 1 km DEM: relief within the cell [coarse]",
     "target_source": "Moon: LOLA DEM; Mars: MOLA via Mars Trek"
   },
   {
     "id": "D5_rock",
-    "name": "Rock / regolith",
-    "description": "Exposed bedrock, volcanic or basaltic surface",
-    "earth_source": "EMIT L2B mineral identification (basalt/pyroxene/olivine groups) [PRIMARY]",
+    "name": "Rock / regolith composition",
+    "description": "Mafic (silica-poor, basalt-like) character of bare ground; thermal-emissivity proxy. Not rock exposure, not mineral identification.",
+    "earth_source": "NASA ASTER Global Emissivity Dataset v4.1 (silicate contrast, bare ground only) [proxy]",
     "target_source": "Mars: CRISM MTRDR mineral maps"
   },
   {
     "id": "D6_ice",
     "name": "Ice / permafrost",
     "description": "Snow, glacier or ground-ice presence",
-    "earth_source": "NASA POWER / GIBS snow & ice layers [supporting]",
+    "earth_source": "MODIS MOD10CM snow cover, 2015-2024 monthly climatology [proxy: not glacier, permafrost or subsurface ice]",
     "target_source": "Moon: Diviner polar cold-trap maps; Mars: SWIM/SHARAD (literature)"
   },
   {

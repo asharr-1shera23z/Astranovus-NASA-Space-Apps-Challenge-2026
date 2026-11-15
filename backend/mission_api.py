@@ -27,6 +27,8 @@ from .geo_labels import label_for
 # area such as the Antarctic plateau cannot crowd every other candidate region out of the list.
 TOP_PCT = 0.60
 MIN_RESULT_COVERAGE = 0.5
+# A dimension defined in fewer than this share of cells makes an experiment 'partial', never 'ready'.
+SPARSE_DIM_COVERAGE = 0.5
 
 # What we know about how each dimension is built (see scripts/fetch_power_grid.py).
 # "missing" is never taken from this table - it is computed from the loaded grid.
@@ -87,6 +89,22 @@ def _terrain(e):
     return {"state": "verified_local", **{k: e.get(k) for k in keys}}
 
 
+def _surface(f):
+    """Coarse per-cell surface context from the features file (never a substitute for the 30 m terrain check)."""
+    if f is None:
+        return None
+    def num(x, nd=1):
+        return None if x is None or (isinstance(x, float) and np.isnan(x)) else round(float(x), nd)
+    return {
+        "perennial_snow_ice": bool(f.perennial_snow_ice) if num(f.perennial_snow_ice) is not None else None,
+        "snow_mean_valid_pct": num(f.snow_mean_valid_pct),
+        "elevation_mean_m": num(f.dem_elev_mean_m, 0),
+        "relief_1km_m": num(f.dem_relief_m, 0),
+        "slope_1km_deg": num(f.dem_slope_mean_deg, 2),
+        "dem_source": f.dem_source if isinstance(f.dem_source, str) and f.dem_source else None,
+    }
+
+
 def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes: dict,
                   root: pathlib.Path, grid_is_sample: bool, grid_name: str) -> APIRouter:
     router = APIRouter()
@@ -96,6 +114,11 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
     dim_meta = {d["id"]: d for d in dimensions}
     ev_path = root / "data/target_evidence_summary.json"
     evidence = json.load(open(ev_path, encoding="utf-8")) if ev_path.exists() else {"targets": {}}
+    feat_path = root / "data/processed/earth_grid_features.csv"
+    feats = {}
+    if feat_path.exists() and not grid_is_sample:
+        fdf = pd.read_csv(feat_path)
+        feats = {(float(r.lat), float(r.lon)): r for r in fdf.itertuples(index=False)}
     s2_path = root / "data/processed/stage2.json"
     stage2 = {}
     if s2_path.exists():
@@ -197,11 +220,12 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
                     proxies.append(dim)
             else:
                 missing.append(dim)
+        sparse = [d for d, r in eff["rules"].items() if float(r["weight"]) > 0 and dim_has_data(d) and float(grid[d].notna().mean()) < SPARSE_DIM_COVERAGE]
         gate_missing = [g for g in pu.get("gates", []) if not dim_has_data(g["dim"])]
         max_cov = (have / total) if total else 0.0
         if gate_missing or max_cov < MIN_RESULT_COVERAGE:
             state = "unavailable"
-        elif missing or proxies:
+        elif missing or proxies or sparse:
             state = "partial"
         else:
             state = "ready"
@@ -212,8 +236,10 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
             notes.append(f"Only {max_cov:.0%} of this mission/site's weighted criteria have data (minimum {MIN_RESULT_COVERAGE:.0%}).")
         for d in proxies:
             notes.append(f"{dim_meta.get(d, {}).get('name', d)} is a proxy, not a direct measurement.")
+        for d in sparse:
+            notes.append(f"{dim_meta.get(d, {}).get('name', d)} is defined in only {float(grid[d].notna().mean()):.0%} of cells; elsewhere it is excluded from the score.")
         return {"state": state, "max_coverage": round(max_cov, 3),
-                "missing_dimensions": missing, "proxy_dimensions": proxies,
+                "missing_dimensions": missing, "proxy_dimensions": proxies, "sparse_dimensions": sparse,
                 "gate_dimensions_missing": [g["dim"] for g in gate_missing], "notes": notes}
 
     def target_card(t: dict, exp: dict) -> dict:
@@ -295,7 +321,13 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
         if assessment["state"] == "unavailable" and not allow_unverified:
             return _py({**base, "regions": [], "n_cells_passed": 0, "weights_used": {}})
 
-        out = _recommend(grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top, top_pct=TOP_PCT)
+        # Strict gating: a cell whose required (gate) dimension has no data cannot be shown as a verified match.
+        # They are excluded unless the user explicitly asks for the provisional view.
+        gate_dims = [g["dim"] for g in pu.get("gates", []) if g["dim"] in grid.columns]
+        unverified_mask = grid[gate_dims].isna().any(axis=1) if gate_dims else pd.Series(False, index=grid.index)
+        run_grid = grid if allow_unverified else grid[~unverified_mask]
+        base["n_cells_excluded_unverified"] = 0 if allow_unverified else int(unverified_mask.sum())
+        out = _recommend(run_grid, t, pu, dimensions, min_coverage=min_coverage, top_regions=top, top_pct=TOP_PCT)
         base["provisional"] = assessment["state"] == "unavailable"
         regions = []
         for r in out.get("regions", []):
@@ -307,7 +339,12 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
                     if float(row["weight"]) <= 0:
                         continue
                     st = status_by_id.get(row["dimension"], {})
-                    dims.append({**row, "name": dim_meta.get(row["dimension"], {}).get("name", row["dimension"]),
+                    frow = feats.get((lat, lon))
+                    reason = None
+                    if row["percentile"] is None and frow is not None:
+                        reason = getattr(frow, f"{row['dimension'].split('_')[0]}_missing_reason", None) or None
+                    dims.append({**row, "missing_reason": reason,
+                                 "name": dim_meta.get(row["dimension"], {}).get("name", row["dimension"]),
                                  "data_status": "missing" if row["percentile"] is None else st.get("status", "derived"),
                                  "temporal": st.get("temporal", ""),
                                  "source": st.get("provenance", "")})
@@ -316,9 +353,10 @@ def create_router(grid: pd.DataFrame, targets: dict, dimensions: list, purposes:
             lab = label_for(lat, lon)
             regions.append({**r, "centroid": {"lat": r["lat"], "lon": r["lon"]}, "lat": lat, "lon": lon,
                             "id": f"R{r['rank']}", "location_label": lab["label"],
-                            "region_name": lab["region_name"], "label_basis": lab["basis"],
+                            "region_name": lab["region_name"], "country": lab["country"], "label_basis": lab["basis"],
                             "dimensions": dims, "applications": exp["applications"],
-                            "terrain": _terrain(stage2.get((lat, lon)))})
+                            "terrain": _terrain(stage2.get((lat, lon))),
+                            "surface": _surface(feats.get((lat, lon)))})
         base["regions"] = regions
         base["n_cells_passed"] = out.get("n_cells_passed", 0)
         base["weights_used"] = out.get("weights_used", {})

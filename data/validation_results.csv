@@ -1,47 +1,72 @@
-kind,split,site,target,cell_lat,cell_lon,dist_deg,score,percentile,in_grid
-positive,heldout,"Atacama Desert, Chile",MARS_JEZERO,-23.75,-68.75,0.73,85.65,0.9614264919941776,True
-positive,heldout,"Atacama Desert, Chile",MARS_CHLORIDE,-23.75,-68.75,0.73,79.77,0.9474526928675401,True
-positive,tuning,"Devon Island / Haughton crater, Canada",MARS_ICE,76.25,-91.25,0.93,68.08,0.7583697234352256,True
-positive,heldout,"Lava Beds National Monument, USA",MOON_LAVATUBE,41.25,-121.25,0.49,60.76,0.5014556040756915,True
-positive,tuning,"Kilauea volcano, Hawaii, USA",MOON_LAVATUBE,53.75,-166.25,35.87,38.5,0.10262008733624454,False
-positive,heldout,Icelandic volcanic fields,MOON_LAVATUBE,63.75,-18.75,1.27,56.26,0.384570596797671,True
-positive,heldout,"Death Valley, USA",MARS_CHLORIDE,36.25,-116.25,0.73,69.01,0.8778748180494906,True
-positive,heldout,"Death Valley, USA",MARS_JEZERO,36.25,-116.25,0.73,76.69,0.8719068413391557,True
-positive,tuning,"Colorado Desert, California, USA",MOON_MARE,33.75,-116.25,0.84,61.82,0.8212518195050946,True
-positive,tuning,"Colorado Desert, California, USA",MARS_JEZERO,33.75,-116.25,0.84,76.1,0.8617176128093158,True
-positive,tuning,"McMurdo Dry Valleys, Antarctica",MARS_ICE,-78.75,161.25,1.28,69.32,0.7797671033478895,True
-positive,heldout,"Svalbard, Norway (AMASE)",MARS_JEZERO,78.75,16.25,0.57,60.19,0.4318777292576419,True
-control,control,Amazon rainforest,MARS_CHLORIDE,-3.75,-61.25,1.46,29.71,0.11455604075691413,True
-control,control,Amazon rainforest,MARS_ICE,-3.75,-61.25,1.46,25.02,0.09315866084425037,True
-control,control,Amazon rainforest,MARS_JEZERO,-3.75,-61.25,1.46,18.16,0.003056768558951965,True
-control,control,Amazon rainforest,MOON_LAVATUBE,-3.75,-61.25,1.46,20.77,0.003930131004366812,True
-control,control,Amazon rainforest,MOON_MARE,-3.75,-61.25,1.46,39.25,0.2534206695778748,True
-control,control,Congo Basin rainforest,MARS_CHLORIDE,-1.25,21.25,1.46,26.98,0.0787481804949054,True
-control,control,Congo Basin rainforest,MARS_ICE,-1.25,21.25,1.46,22.15,0.053857350800582245,True
-control,control,Congo Basin rainforest,MARS_JEZERO,-1.25,21.25,1.46,22.51,0.009461426491994178,True
-control,control,Congo Basin rainforest,MOON_LAVATUBE,-1.25,21.25,1.46,24.43,0.008879184861717612,True
-control,control,Congo Basin rainforest,MOON_MARE,-1.25,21.25,1.46,35.36,0.16899563318777291,True
-control,control,Borneo rainforest,MARS_CHLORIDE,1.25,113.75,0.79,11.91,0.002183406113537118,True
-control,control,Borneo rainforest,MARS_ICE,1.25,113.75,0.79,12.21,0.00043668122270742364,True
-control,control,Borneo rainforest,MARS_JEZERO,1.25,113.75,0.79,24.91,0.014119359534206696,True
-control,control,Borneo rainforest,MOON_LAVATUBE,1.25,113.75,0.79,26.71,0.013828238719068414,True
-control,control,Borneo rainforest,MOON_MARE,1.25,113.75,0.79,13.97,0.0034934497816593887,True
-control,control,Ganges plain farmland,MARS_CHLORIDE,26.25,83.75,1.15,46.64,0.412372634643377,True
-control,control,Ganges plain farmland,MARS_ICE,26.25,83.75,1.15,35.68,0.1978165938864629,True
-control,control,Ganges plain farmland,MARS_JEZERO,26.25,83.75,1.15,34.53,0.06128093158660844,True
-control,control,Ganges plain farmland,MOON_LAVATUBE,26.25,83.75,1.15,38.5,0.10262008733624454,True
-control,control,Ganges plain farmland,MOON_MARE,26.25,83.75,1.15,55.0,0.6866084425036391,True
-control,control,Western European farmland,MARS_CHLORIDE,48.75,1.25,0.9,46.51,0.4088791848617176,True
-control,control,Western European farmland,MARS_ICE,48.75,1.25,0.9,41.82,0.28893740902474524,True
-control,control,Western European farmland,MARS_JEZERO,48.75,1.25,0.9,51.75,0.29737991266375546,True
-control,control,Western European farmland,MOON_LAVATUBE,48.75,1.25,0.9,52.09,0.309315866084425,True
-control,control,Western European farmland,MOON_MARE,48.75,1.25,0.9,50.71,0.5764192139737991,True
-control,control,US Midwest cropland,MARS_CHLORIDE,41.25,-93.75,0.62,40.17,0.27627365356622996,True
-control,control,US Midwest cropland,MARS_ICE,41.25,-93.75,0.62,39.91,0.25225618631732166,True
-control,control,US Midwest cropland,MARS_JEZERO,41.25,-93.75,0.62,40.21,0.12358078602620089,True
-control,control,US Midwest cropland,MOON_LAVATUBE,41.25,-93.75,0.62,39.23,0.11120815138282387,True
-control,control,US Midwest cropland,MOON_MARE,41.25,-93.75,0.62,46.68,0.46200873362445416,True
-hypothesis,n/a,Karakoram / Baltoro glacier region,MARS_ICE,36.25,76.25,0.56,54.55,0.5688500727802037,True
-hypothesis,n/a,Hingol mud volcanoes,MARS_MUDVOLC,26.25,66.25,1.01,42.33,0.3197962154294032,True
-hypothesis,n/a,Khewra / Salt Range,MARS_CHLORIDE,33.75,73.75,1.27,36.02,0.20494905385735082,True
-hypothesis,n/a,Katpana cold desert (Skardu),MARS_ICE,36.25,76.25,1.18,54.55,0.5688500727802037,True
+kind,ctype,split,site_id,site,target,cell_id,cell_lat,cell_lon,dist_deg,score,percentile,coverage,in_grid
+positive,,heldout,atacama,"Atacama Desert, Chile",MARS_JEZERO,1117,-23.75,-68.75,0.73,81.89,0.9832605531295489,1.0,True
+positive,,heldout,atacama,"Atacama Desert, Chile",MARS_CHLORIDE,1117,-23.75,-68.75,0.73,79.69,0.9480349344978166,1.0,True
+positive,,tuning,devon_haughton,"Devon Island / Haughton crater, Canada",MARS_ICE,3339,76.25,-91.25,0.92,68.24,0.8157205240174672,1.0,True
+positive,,tuning,lava_beds,"Lava Beds National Monument, USA",MOON_LAVATUBE,2193,41.25,-121.25,0.49,60.4,0.5588064046579331,0.75,True
+positive,,tuning,kilauea,"Kilauea volcano, Hawaii, USA",MOON_LAVATUBE,2068,36.25,-121.25,34.24,70.35,0.8330422125181951,0.75,False
+positive,,heldout,iceland,Icelandic volcanic fields,MOON_LAVATUBE,2956,63.75,-18.75,1.27,55.79,0.4393013100436681,0.75,True
+positive,,tuning,death_valley,"Death Valley, USA",MARS_CHLORIDE,2070,36.25,-116.25,0.73,68.85,0.8503639010189228,1.0,True
+positive,,tuning,death_valley,"Death Valley, USA",MARS_JEZERO,2070,36.25,-116.25,0.73,76.48,0.9142649199417758,1.0,True
+positive,,heldout,colorado_desert,"Colorado Desert, California, USA",MOON_MARE,2011,33.75,-116.25,0.84,62.11,0.7602620087336245,1.0,True
+positive,,heldout,colorado_desert,"Colorado Desert, California, USA",MARS_JEZERO,2011,33.75,-116.25,0.84,74.1,0.8612809315866085,1.0,True
+positive,,heldout,mcmurdo_dry_valleys,"McMurdo Dry Valleys, Antarctica",MARS_ICE,650,-78.75,161.25,1.28,58.31,0.6609898107714702,0.846,True
+positive,,tuning,svalbard,"Svalbard, Norway (AMASE)",MARS_JEZERO,3401,78.75,16.25,0.57,59.71,0.4660844250363901,0.846,True
+control,easy,control,amazon,Amazon rainforest,MARS_CHLORIDE,1385,-3.75,-61.25,1.46,29.78,0.12547307132459973,1.0,True
+control,easy,control,amazon,Amazon rainforest,MARS_ICE,1385,-3.75,-61.25,1.46,25.64,0.10087336244541485,1.0,True
+control,easy,control,amazon,Amazon rainforest,MARS_JEZERO,1385,-3.75,-61.25,1.46,18.03,0.003056768558951965,0.846,True
+control,easy,control,amazon,Amazon rainforest,MOON_LAVATUBE,1385,-3.75,-61.25,1.46,20.61,0.003930131004366812,0.75,True
+control,easy,control,amazon,Amazon rainforest,MOON_MARE,1385,-3.75,-61.25,1.46,39.36,0.29213973799126636,0.833,True
+control,easy,control,congo,Congo Basin rainforest,MARS_CHLORIDE,1431,-1.25,21.25,1.46,27.1,0.0851528384279476,1.0,True
+control,easy,control,congo,Congo Basin rainforest,MARS_ICE,1431,-1.25,21.25,1.46,22.09,0.05574963609898108,1.0,True
+control,easy,control,congo,Congo Basin rainforest,MARS_JEZERO,1431,-1.25,21.25,1.46,22.3,0.009461426491994178,0.846,True
+control,easy,control,congo,Congo Basin rainforest,MOON_LAVATUBE,1431,-1.25,21.25,1.46,24.18,0.008879184861717612,0.75,True
+control,easy,control,congo,Congo Basin rainforest,MOON_MARE,1431,-1.25,21.25,1.46,35.53,0.21470160116448325,0.833,True
+control,easy,control,borneo,Borneo rainforest,MARS_CHLORIDE,1477,1.25,113.75,0.79,11.67,0.001310043668122271,1.0,True
+control,easy,control,borneo,Borneo rainforest,MARS_ICE,1477,1.25,113.75,0.79,11.87,0.00043668122270742364,1.0,True
+control,easy,control,borneo,Borneo rainforest,MARS_JEZERO,1477,1.25,113.75,0.79,24.46,0.013537117903930132,0.846,True
+control,easy,control,borneo,Borneo rainforest,MOON_LAVATUBE,1477,1.25,113.75,0.79,26.17,0.014119359534206696,0.75,True
+control,easy,control,borneo,Borneo rainforest,MOON_MARE,1477,1.25,113.75,0.79,13.6,0.0027656477438136825,0.833,True
+control,easy,control,ganges,Ganges plain farmland,MARS_CHLORIDE,1873,26.25,83.75,1.15,46.72,0.44294032023289664,1.0,True
+control,easy,control,ganges,Ganges plain farmland,MARS_ICE,1873,26.25,83.75,1.15,35.32,0.19446870451237264,1.0,True
+control,easy,control,ganges,Ganges plain farmland,MARS_JEZERO,1873,26.25,83.75,1.15,34.4,0.062299854439592434,0.846,True
+control,easy,control,ganges,Ganges plain farmland,MOON_LAVATUBE,1873,26.25,83.75,1.15,38.33,0.11426491994177584,0.75,True
+control,easy,control,ganges,Ganges plain farmland,MOON_MARE,1873,26.25,83.75,1.15,55.11,0.620524017467249,0.833,True
+control,easy,control,w_europe,Western European farmland,MARS_CHLORIDE,2436,48.75,1.25,0.9,46.62,0.4410480349344978,1.0,True
+control,easy,control,w_europe,Western European farmland,MARS_ICE,2436,48.75,1.25,0.9,41.37,0.2815138282387191,1.0,True
+control,easy,control,w_europe,Western European farmland,MARS_JEZERO,2436,48.75,1.25,0.9,51.54,0.3091703056768559,0.846,True
+control,easy,control,w_europe,Western European farmland,MOON_LAVATUBE,2436,48.75,1.25,0.9,51.84,0.3579330422125182,0.75,True
+control,easy,control,w_europe,Western European farmland,MOON_MARE,2436,48.75,1.25,0.9,50.88,0.5285298398835517,0.833,True
+control,easy,control,us_midwest,US Midwest cropland,MARS_CHLORIDE,2204,41.25,-93.75,0.62,40.25,0.3081513828238719,1.0,True
+control,easy,control,us_midwest,US Midwest cropland,MARS_ICE,2204,41.25,-93.75,0.62,39.82,0.25633187772925764,1.0,True
+control,easy,control,us_midwest,US Midwest cropland,MARS_JEZERO,2204,41.25,-93.75,0.62,40.05,0.1260553129548763,0.846,True
+control,easy,control,us_midwest,US Midwest cropland,MOON_LAVATUBE,2204,41.25,-93.75,0.62,39.04,0.12474526928675402,0.75,True
+control,easy,control,us_midwest,US Midwest cropland,MOON_MARE,2204,41.25,-93.75,0.62,46.81,0.4407569141193595,0.833,True
+control,hard,control,boreal_siberia,Siberian taiga (cold but forested),MARS_CHLORIDE,2803,58.75,98.75,1.0,36.61,0.24075691411935954,1.0,True
+control,hard,control,boreal_siberia,Siberian taiga (cold but forested),MARS_ICE,2803,58.75,98.75,1.0,45.33,0.37292576419213974,1.0,True
+control,hard,control,boreal_siberia,Siberian taiga (cold but forested),MARS_JEZERO,2803,58.75,98.75,1.0,47.09,0.23202328966521107,0.846,True
+control,hard,control,boreal_siberia,Siberian taiga (cold but forested),MOON_LAVATUBE,2803,58.75,98.75,1.0,41.93,0.1643377001455604,0.75,True
+control,hard,control,boreal_siberia,Siberian taiga (cold but forested),MOON_MARE,2803,58.75,98.75,1.0,39.68,0.29767103347889373,0.833,True
+control,hard,control,boreal_canada,Canadian boreal forest,MARS_CHLORIDE,2677,56.25,-101.25,1.44,51.79,0.5512372634643378,1.0,True
+control,hard,control,boreal_canada,Canadian boreal forest,MARS_ICE,2677,56.25,-101.25,1.44,55.84,0.6190684133915575,1.0,True
+control,hard,control,boreal_canada,Canadian boreal forest,MARS_JEZERO,2677,56.25,-101.25,1.44,50.28,0.29141193595342063,0.846,True
+control,hard,control,boreal_canada,Canadian boreal forest,MOON_LAVATUBE,2677,56.25,-101.25,1.44,46.51,0.24788937409024744,0.75,True
+control,hard,control,boreal_canada,Canadian boreal forest,MOON_MARE,2677,56.25,-101.25,1.44,57.43,0.6643377001455604,0.833,True
+control,hard,control,great_plains,US Great Plains grassland,MARS_CHLORIDE,2201,41.25,-101.25,0.97,60.65,0.7282387190684134,1.0,True
+control,hard,control,great_plains,US Great Plains grassland,MARS_ICE,2201,41.25,-101.25,0.97,47.75,0.4385735080058224,1.0,True
+control,hard,control,great_plains,US Great Plains grassland,MARS_JEZERO,2201,41.25,-101.25,0.97,70.3,0.753566229985444,0.846,True
+control,hard,control,great_plains,US Great Plains grassland,MOON_LAVATUBE,2201,41.25,-101.25,0.97,73.55,0.8765647743813683,0.75,True
+control,hard,control,great_plains,US Great Plains grassland,MOON_MARE,2201,41.25,-101.25,0.97,61.49,0.7518195050946143,0.833,True
+control,hard,control,sahel_savanna,Sahel savanna,MARS_CHLORIDE,1618,13.75,3.75,1.43,71.68,0.8885007278020378,1.0,True
+control,hard,control,sahel_savanna,Sahel savanna,MARS_ICE,1618,13.75,3.75,1.43,41.62,0.2858806404657933,1.0,True
+control,hard,control,sahel_savanna,Sahel savanna,MARS_JEZERO,1618,13.75,3.75,1.43,57.07,0.4106259097525473,1.0,True
+control,hard,control,sahel_savanna,Sahel savanna,MOON_LAVATUBE,1618,13.75,3.75,1.43,61.77,0.5975254730713246,1.0,True
+control,hard,control,sahel_savanna,Sahel savanna,MOON_MARE,1618,13.75,3.75,1.43,71.59,0.9212518195050947,1.0,True
+control,hard,control,mediterranean,Mediterranean scrub (Spain),MARS_CHLORIDE,2150,38.75,-3.75,0.32,57.43,0.6685589519650655,1.0,True
+control,hard,control,mediterranean,Mediterranean scrub (Spain),MARS_ICE,2150,38.75,-3.75,0.32,42.52,0.3050946142649199,1.0,True
+control,hard,control,mediterranean,Mediterranean scrub (Spain),MARS_JEZERO,2150,38.75,-3.75,0.32,70.38,0.7573508005822417,0.846,True
+control,hard,control,mediterranean,Mediterranean scrub (Spain),MOON_LAVATUBE,2150,38.75,-3.75,0.32,73.48,0.8755458515283844,0.75,True
+control,hard,control,mediterranean,Mediterranean scrub (Spain),MOON_MARE,2150,38.75,-3.75,0.32,55.15,0.6218340611353712,0.833,True
+hypothesis,,n/a,karakoram_baltoro,Karakoram / Baltoro glacier region,MARS_ICE,2108,36.25,76.25,0.56,54.72,0.5998544395924309,1.0,True
+hypothesis,,n/a,hingol,Hingol mud volcanoes,MARS_MUDVOLC,1866,26.25,66.25,1.01,41.93,0.3414847161572052,1.0,True
+hypothesis,,n/a,khewra_salt_range,Khewra / Salt Range,MARS_CHLORIDE,2048,33.75,73.75,1.27,35.96,0.226783114992722,1.0,True
+hypothesis,,n/a,katpana,Katpana cold desert (Skardu),MARS_ICE,2108,36.25,76.25,1.17,54.72,0.5998544395924309,1.0,True
